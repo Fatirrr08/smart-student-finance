@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: finance_tracker_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+      POSTGRES_DB: finance_tracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: finance_tracker_backend
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_USER: admin
+      DB_PASSWORD: adminpassword
+      DB_NAME: finance_tracker
+      DB_PORT: 5432
+      JWT_SECRET: supersecret
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    container_name: finance_tracker_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

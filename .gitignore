@@ -1,0 +1,17 @@
+# Backend
+backend/api
+backend/finance_tracker.db
+backend/finance_tracker.db-journal
+
+# Frontend
+frontend/node_modules
+frontend/dist
+frontend/.env.local
+frontend/.env.*.local
+
+# Database
+pgdata/
+
+# OS Files
+.DS_Store
+*.swp
