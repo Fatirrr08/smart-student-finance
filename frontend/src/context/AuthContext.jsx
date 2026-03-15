@@ -20,25 +20,26 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
-      const { token, user } = response.data;
+      // Simulate API call for GitHub Pages frontend-only hosting
+      const mockUser = { id: 1, name: 'Student', email: email };
+      const mockToken = 'mock-jwt-token-for-github-pages';
       
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token', mockToken);
+      localStorage.setItem('user', JSON.stringify(mockUser));
       
-      setUser(user);
+      setUser(mockUser);
       return { success: true };
     } catch (error) {
-      return { success: false, message: error.response?.data?.error || 'Login failed' };
+      return { success: false, message: 'Login failed' };
     }
   };
 
   const register = async (name, email, password) => {
     try {
-      await api.post('/auth/register', { name, email, password });
+      // Simulate API call for GitHub Pages frontend-only hosting
       return { success: true };
     } catch (error) {
-      return { success: false, message: error.response?.data?.error || 'Registration failed' };
+      return { success: false, message: 'Registration failed' };
     }
   };
 
