@@ -24,7 +24,7 @@ const Income = () => {
       return;
     }
     
-    const incomesRef = ref(db, `transactions/${user.uid}`); // Use user.uid for Firebase
+    const incomesRef = ref(db, `transactions/${user.id}`);
     const unsubscribe = onValue(incomesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -61,7 +61,7 @@ const Income = () => {
         createdAt: new Date().toISOString() // Add a timestamp
       };
 
-      const incomesRef = ref(db, `transactions/${user.uid}`);
+      const incomesRef = ref(db, `transactions/${user.id}`);
       await push(incomesRef, newTransaction);
       
       // Reset form state
@@ -83,7 +83,7 @@ const Income = () => {
     if (!user) return;
     
     try {
-      const itemRef = ref(db, `transactions/${user.uid}/${id}`);
+      const itemRef = ref(db, `transactions/${user.id}/${id}`);
       await remove(itemRef);
       alert('Pemasukan berhasil dihapus!');
     } catch (err) {

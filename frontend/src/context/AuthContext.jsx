@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
       if (currentUser) {
         setUser({
           id: currentUser.uid,
+          uid: currentUser.uid,
           name: currentUser.displayName || 'User',
           email: currentUser.email
         });
@@ -41,6 +42,7 @@ export const AuthProvider = ({ children }) => {
       const currentUser = userCredential.user;
       setUser({
         id: currentUser.uid,
+        uid: currentUser.uid,
         name: currentUser.displayName || 'User',
         email: currentUser.email
       });
@@ -64,6 +66,7 @@ export const AuthProvider = ({ children }) => {
       
       setUser({
         id: currentUser.uid,
+        uid: currentUser.uid,
         name: name,
         email: currentUser.email
       });
@@ -84,6 +87,7 @@ export const AuthProvider = ({ children }) => {
       const currentUser = userCredential.user;
       setUser({
         id: currentUser.uid,
+        uid: currentUser.uid,
         name: currentUser.displayName || 'User',
         email: currentUser.email
       });
