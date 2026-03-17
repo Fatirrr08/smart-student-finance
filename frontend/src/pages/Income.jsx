@@ -61,9 +61,14 @@ const Income = () => {
         createdAt: new Date().toISOString() // Add a timestamp
       };
 
-      console.log("Adding transaction for user:", user);
-      const incomesRef = ref(db, `transactions/${user.id || user.uid}`);
-      console.log("Target path:", `transactions/${user.id || user.uid}`);
+      const uid = user.id || user.uid;
+      const incomesRef = ref(db, `transactions/${uid}`);
+      
+      console.log("=== DEBUG FIREBASE ===");
+      console.log("Current User Context:", user);
+      console.log("Firebase Auth UID:", auth.currentUser ? auth.currentUser.uid : "NULL (NOT AUTHENTICATED)");
+      console.log("Target Path:", `transactions/${uid}`);
+      
       await push(incomesRef, newTransaction);
       
       // Reset form state

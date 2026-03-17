@@ -33,7 +33,7 @@ const Reports = () => {
     }
     
     setLoading(true);
-    const transactionsRef = ref(db, `transactions/${user.id}`);
+    const transactionsRef = ref(db, `transactions/${user.id || user.uid}`);
     const unsubscribe = onValue(transactionsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
