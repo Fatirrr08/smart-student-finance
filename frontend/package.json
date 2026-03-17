@@ -1,6 +1,7 @@
 {
   "name": "frontend",
   "private": true,
+  "homepage": "https://Fatirrr08.github.io/smart-student-finance/",
   "version": "0.0.0",
   "type": "module",
   "scripts": {

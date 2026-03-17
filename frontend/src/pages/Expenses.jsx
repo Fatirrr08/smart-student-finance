@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { ref, push, remove, onValue, set } from 'firebase/database';
 import { db, auth } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 
 const Expenses = () => {
   const { user } = useAuth();
-  console.log("Rendering Expenses Page... User:", user);
-  
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState(null);
   
   // Form State
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Makan');
-  const [source, setSource] = useState('Cash / Tunai'); // Changed from paymentMethod to source
+  const [source, setSource] = useState('Cash / Tunai');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [note, setNote] = useState('');
 
@@ -30,7 +29,6 @@ const Expenses = () => {
     const unsubscribe = onValue(expensesRef, (snapshot) => {
       try {
         const data = snapshot.val();
-        console.log("Raw Expenses Data:", data);
         if (data) {
           const list = Object.keys(data)
             .map(key => ({ id: key, ...data[key] }))
@@ -63,25 +61,30 @@ const Expenses = () => {
     if (!user) return;
     
     try {
-      const finalNote = source !== 'Cash / Tunai' ? `[Dari: ${source}] ${note}` : `[Dari: Cash] ${note}`;
-      const newTransaction = { 
+      const finalNote = note.includes('[Dari:') ? note : (source !== 'Cash / Tunai' ? `[Dari: ${source}] ${note}` : `[Dari: Cash] ${note}`);
+      const transactionData = { 
         type: 'expense', 
         amount: parseFloat(amount), 
         category, 
         date: date || new Date().toISOString().split('T')[0],
         note: finalNote,
-        createdAt: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       };
 
+      if (!editId) {
+        transactionData.createdAt = new Date().toISOString();
+      }
+
       const uid = user?.id || user?.uid;
-      const expensesRef = ref(db, `transactions/${uid}`);
+      const targetRef = editId 
+        ? ref(db, `transactions/${uid}/${editId}`)
+        : ref(db, `transactions/${uid}`);
       
-      console.log("=== DEBUG EXPENSES V2 ===");
-      console.log("User Context:", user);
-      console.log("Firebase Auth UID:", auth.currentUser ? auth.currentUser.uid : "NULL");
-      console.log("Target Path:", `transactions/${uid}`);
-      
-      await push(expensesRef, newTransaction);
+      if (editId) {
+        await set(targetRef, { ...transactionData, id: editId });
+      } else {
+        await push(targetRef, transactionData);
+      }
       
       setAmount('');
       setCategory('Makan');
@@ -89,11 +92,31 @@ const Expenses = () => {
       setDate(new Date().toISOString().split('T')[0]);
       setNote('');
       setShowForm(false);
-      alert('Pengeluaran berhasil ditambahkan!');
+      setEditId(null);
+      alert(editId ? 'Pengeluaran berhasil diperbarui!' : 'Pengeluaran berhasil ditambahkan!');
     } catch (err) {
-      console.error("Failed to add expense:", err);
-      alert('Gagal menambahkan pengeluaran: ' + err.message);
+      console.error("Failed to save expense:", err);
+      alert('Gagal menyimpan pengeluaran: ' + err.message);
     }
+  };
+
+  const handleEdit = (exp) => {
+    setEditId(exp.id);
+    setAmount(exp.amount);
+    setCategory(exp.category);
+    
+    let cleanNote = exp.note || '';
+    if (cleanNote.startsWith('[Dari:')) {
+      const parts = cleanNote.split('] ');
+      const src = parts[0].replace('[Dari: ', '').replace('Cash', 'Cash / Tunai');
+      setSource(src);
+      cleanNote = parts[1] || '';
+    }
+    
+    setNote(cleanNote);
+    setDate(exp.date);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id) => {
@@ -128,7 +151,12 @@ const Expenses = () => {
           <p className="text-gray-500 dark:text-gray-400 mt-1">Catat dan pantau kemana saja uangmu pergi.</p>
         </div>
         <button 
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setEditId(null);
+            setAmount('');
+            setNote('');
+            setShowForm(!showForm);
+          }}
           className="bg-primary hover:bg-indigo-700 text-white px-4 py-2 w-full sm:w-auto rounded-lg flex justify-center items-center gap-2 transition-colors"
         >
           <Plus size={20} /> Tambah Pengeluaran
@@ -137,7 +165,9 @@ const Expenses = () => {
 
       {showForm && (
         <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 animate-fade-in-up">
-          <h3 className="text-lg font-semibold mb-4 dark:text-white">Tambah Data Pengeluaran</h3>
+          <h3 className="text-lg font-semibold mb-4 dark:text-white">
+            {editId ? 'Edit Data Pengeluaran' : 'Tambah Data Pengeluaran'}
+          </h3>
           <form className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" onSubmit={handleAdd}>
              <div>
                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Jumlah</label>
@@ -185,7 +215,8 @@ const Expenses = () => {
       )}
 
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Table View - Hidden on Mobile */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
@@ -197,38 +228,76 @@ const Expenses = () => {
               </tr>
             </thead>
             <tbody>
-              {expenses.length > 0 ? expenses.map((exp) => {
-                try {
-                  return (
-                    <tr key={exp.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                      <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                        {exp.date ? new Date(exp.date).toLocaleDateString('id-ID') : 'No Date'}
-                      </td>
-                      <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                        <span className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded text-xs font-medium">
-                          {exp.category}
-                        </span>
-                      </td>
-                      <td className="p-4 text-sm text-gray-500 dark:text-gray-400 min-w-[200px]">
-                        {exp.note || '-'}
-                      </td>
-                      <td className="p-4 text-sm font-semibold text-danger text-right whitespace-nowrap">-Rp {formatCurrency(exp.amount || 0)}</td>
-                      <td className="p-4 flex justify-center gap-2">
-                        <button onClick={() => handleDelete(exp.id)} className="text-gray-400 hover:text-danger p-2 transition-colors"><Trash2 size={18} /></button>
-                      </td>
-                    </tr>
-                  );
-                } catch (e) {
-                  console.error("Error rendering expense row:", e, exp);
-                  return null;
-                }
-              }) : (
+              {expenses.length > 0 ? expenses.map((exp) => (
+                <tr key={exp.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                  <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                    {exp.date ? new Date(exp.date).toLocaleDateString('id-ID') : 'No Date'}
+                  </td>
+                  <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                    <span className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded text-xs font-medium">
+                      {exp.category}
+                    </span>
+                  </td>
+                  <td className="p-4 text-sm text-gray-500 dark:text-gray-400 min-w-[200px]">
+                    {exp.note || '-'}
+                  </td>
+                  <td className="p-4 text-sm font-semibold text-danger text-right whitespace-nowrap">-Rp {formatCurrency(exp.amount || 0)}</td>
+                  <td className="p-4 flex justify-center gap-2">
+                    <button onClick={() => handleEdit(exp)} className="text-gray-400 hover:text-primary p-2 transition-colors">
+                      <Edit2 size={18} />
+                    </button>
+                    <button onClick={() => handleDelete(exp.id)} className="text-gray-400 hover:text-danger p-2 transition-colors">
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              )) : (
                 <tr>
-                  <td colSpan="5" className="p-8 text-center text-gray-500">Belum ada data pengeluaran.</td>
+                  <td colSpan="5" className="p-8 text-center text-gray-500 italic text-sm">Belum ada data pengeluaran.</td>
                 </tr>
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Card View - Mobile Only */}
+        <div className="sm:hidden divide-y divide-gray-100 dark:divide-gray-700">
+          {expenses.length > 0 ? expenses.map((exp) => (
+            <div key={exp.id} className="p-4 flex justify-between items-center group active:bg-gray-50 dark:active:bg-gray-700/50 transition-colors">
+              <div className="flex flex-col gap-1 min-w-0 pr-4" onClick={() => handleEdit(exp)}>
+                <div className="flex items-center gap-2">
+                   <span className="text-xs font-bold text-gray-400 uppercase tracking-tighter">
+                     {exp.date ? new Date(exp.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) : '-'}
+                   </span>
+                   <span className="text-xs font-bold text-danger bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">
+                     {exp.category}
+                   </span>
+                </div>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  {exp.note || 'Pengeluaran'}
+                </h4>
+                <div className="text-base font-bold text-danger">
+                  -Rp {formatCurrency(exp.amount || 0)}
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => handleEdit(exp)} 
+                  className="p-2.5 text-gray-400 hover:text-primary bg-gray-50 dark:bg-gray-700/50 rounded-full shrink-0"
+                >
+                  <Edit2 size={18} />
+                </button>
+                <button 
+                  onClick={() => handleDelete(exp.id)} 
+                  className="p-2.5 text-gray-400 hover:text-danger bg-gray-50 dark:bg-gray-700/50 rounded-full shrink-0"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            </div>
+          )) : (
+            <div className="p-10 text-center text-gray-500 italic text-sm">Belum ada data pengeluaran.</div>
+          )}
         </div>
       </div>
     </div>

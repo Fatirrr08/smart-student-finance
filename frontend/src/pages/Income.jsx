@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { ref, push, remove, onValue } from 'firebase/database';
 import { db, auth } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -9,6 +9,7 @@ const Income = () => {
   const [incomes, setIncomes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState(null);
   
   // Form State
   const [amount, setAmount] = useState('');
@@ -60,26 +61,31 @@ const Income = () => {
     if (!user) return;
     
     try {
-      const finalNote = destination !== 'Saldo Bank' ? `[Ke: ${destination}] ${note}` : `[Ke: Saldo Bank] ${note}`;
-      const newTransaction = { 
+      const finalNote = note.includes('[Ke:') ? note : (destination !== 'Saldo Bank' ? `[Ke: ${destination}] ${note}` : `[Ke: Saldo Bank] ${note}`);
+      const transactionData = { 
         type: 'income', 
         amount: parseFloat(amount), 
         category, 
-        date: date || new Date().toISOString().split('T')[0], // Ensure date is set
+        date: date || new Date().toISOString().split('T')[0],
         note: finalNote,
-        createdAt: new Date().toISOString() // Add a timestamp
+        updatedAt: new Date().toISOString()
       };
 
+      if (!editId) {
+        transactionData.createdAt = new Date().toISOString();
+      }
+
       const uid = user.id || user.uid;
-      const incomesRef = ref(db, `transactions/${uid}`);
+      const targetRef = editId 
+        ? ref(db, `transactions/${uid}/${editId}`)
+        : ref(db, `transactions/${uid}`);
       
-      console.log("=== DEBUG FIREBASE V2 ===");
-      console.log("Timestamp:", new Date().toISOString());
-      console.log("Current User Context:", user);
-      console.log("Firebase Auth UID:", auth.currentUser ? auth.currentUser.uid : "NULL (NOT AUTHENTICATED)");
-      console.log("Target Path:", `transactions/${uid}`);
-      
-      await push(incomesRef, newTransaction);
+      if (editId) {
+        // Use set to update specific record
+        await set(targetRef, { ...transactionData, id: editId });
+      } else {
+        await push(targetRef, transactionData);
+      }
       
       // Reset form state
       setAmount('');
@@ -88,11 +94,32 @@ const Income = () => {
       setDate(new Date().toISOString().split('T')[0]);
       setNote('');
       setShowForm(false);
-      alert('Pemasukan berhasil ditambahkan!');
+      setEditId(null);
+      alert(editId ? 'Pemasukan berhasil diperbarui!' : 'Pemasukan berhasil ditambahkan!');
     } catch (err) {
-      console.error("Failed to add income:", err);
-      alert('Gagal menambahkan pemasukan: ' + err.message);
+      console.error("Failed to save income:", err);
+      alert('Gagal menyimpan pemasukan: ' + err.message);
     }
+  };
+
+  const handleEdit = (inc) => {
+    setEditId(inc.id);
+    setAmount(inc.amount);
+    setCategory(inc.category);
+    
+    // Extract destination from note if exists
+    let cleanNote = inc.note || '';
+    if (cleanNote.startsWith('[Ke:')) {
+      const parts = cleanNote.split('] ');
+      const dest = parts[0].replace('[Ke: ', '');
+      setDestination(dest);
+      cleanNote = parts[1] || '';
+    }
+    
+    setNote(cleanNote);
+    setDate(inc.date);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id) => {
@@ -127,7 +154,12 @@ const Income = () => {
           <p className="text-gray-500 dark:text-gray-400 mt-1">Catat semua sumber pemasukanmu.</p>
         </div>
         <button 
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setEditId(null);
+            setAmount('');
+            setNote('');
+            setShowForm(!showForm);
+          }}
           className="bg-primary hover:bg-indigo-700 text-white px-4 py-2 w-full sm:w-auto rounded-lg flex justify-center items-center gap-2 transition-colors"
         >
           <Plus size={20} /> Tambah Pemasukan
@@ -136,7 +168,9 @@ const Income = () => {
 
       {showForm && (
         <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 animate-fade-in-up">
-          <h3 className="text-lg font-semibold mb-4 dark:text-white">Tambah Data Pemasukan</h3>
+          <h3 className="text-lg font-semibold mb-4 dark:text-white">
+            {editId ? 'Edit Data Pemasukan' : 'Tambah Data Pemasukan'}
+          </h3>
           <form className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" onSubmit={handleAdd}>
              <div>
                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Jumlah</label>
@@ -177,7 +211,8 @@ const Income = () => {
       )}
 
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Table View - Hidden on Mobile */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
@@ -189,33 +224,72 @@ const Income = () => {
               </tr>
             </thead>
             <tbody>
-              {incomes.length > 0 ? incomes.map((inc) => {
-                try {
-                  return (
-                    <tr key={inc.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                      <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">{new Date(inc.date).toLocaleDateString()}</td>
-                      <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                        <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded text-xs font-medium">
-                          {inc.category}
-                        </span>
-                      </td>
-                      <td className="p-4 text-sm text-gray-500 dark:text-gray-400 min-w-[200px]">{inc.note || '-'}</td>
-                      <td className="p-4 text-sm font-semibold text-secondary text-right whitespace-nowrap">+Rp {formatCurrency(inc.amount)}</td>
-                      <td className="p-4 flex justify-center gap-2">
-                        <button onClick={() => handleDelete(inc.id)} className="text-gray-400 hover:text-danger p-2 transition-colors"><Trash2 size={18} /></button>
-                      </td>
-                    </tr>
-                  );
-                } catch (e) {
-                  return null;
-                }
-              }) : (
+              {incomes.length > 0 ? incomes.map((inc) => (
+                <tr key={inc.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                  <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">{new Date(inc.date).toLocaleDateString('id-ID')}</td>
+                  <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                    <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded text-xs font-medium">
+                      {inc.category}
+                    </span>
+                  </td>
+                  <td className="p-4 text-sm text-gray-500 dark:text-gray-400 min-w-[200px]">{inc.note || '-'}</td>
+                  <td className="p-4 text-sm font-semibold text-secondary text-right whitespace-nowrap">+Rp {formatCurrency(inc.amount)}</td>
+                  <td className="p-4 flex justify-center gap-2">
+                    <button onClick={() => handleEdit(inc)} className="text-gray-400 hover:text-primary p-2 transition-colors">
+                      <Edit2 size={18} />
+                    </button>
+                    <button onClick={() => handleDelete(inc.id)} className="text-gray-400 hover:text-danger p-2 transition-colors">
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              )) : (
                 <tr>
-                  <td colSpan="5" className="p-8 text-center text-gray-500">Belum ada data pemasukan.</td>
+                  <td colSpan="5" className="p-8 text-center text-gray-500 italic">Belum ada data pemasukan.</td>
                 </tr>
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Card View - Mobile Only */}
+        <div className="sm:hidden divide-y divide-gray-100 dark:divide-gray-700">
+          {incomes.length > 0 ? incomes.map((inc) => (
+            <div key={inc.id} className="p-4 flex justify-between items-center group active:bg-gray-50 dark:active:bg-gray-700/50 transition-colors">
+              <div className="flex flex-col gap-1 min-w-0 pr-4" onClick={() => handleEdit(inc)}>
+                <div className="flex items-center gap-2">
+                   <span className="text-xs font-bold text-gray-400 uppercase tracking-tighter">
+                     {new Date(inc.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+                   </span>
+                   <span className="text-xs font-bold text-secondary bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded">
+                     {inc.category}
+                   </span>
+                </div>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  {inc.note || 'Pemasukan'}
+                </h4>
+                <div className="text-base font-bold text-secondary">
+                  +Rp {formatCurrency(inc.amount)}
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => handleEdit(inc)} 
+                  className="p-2.5 text-gray-400 hover:text-primary bg-gray-50 dark:bg-gray-700/50 rounded-full shrink-0"
+                >
+                  <Edit2 size={18} />
+                </button>
+                <button 
+                  onClick={() => handleDelete(inc.id)} 
+                  className="p-2.5 text-gray-400 hover:text-danger bg-gray-50 dark:bg-gray-700/50 rounded-full shrink-0"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            </div>
+          )) : (
+            <div className="p-10 text-center text-gray-500 italic text-sm">Belum ada data pemasukan.</div>
+          )}
         </div>
       </div>
     </div>

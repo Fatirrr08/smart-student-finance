@@ -12,6 +12,7 @@ import Expenses from './pages/Expenses';
 
 import Budget from './pages/Budget';
 import Reports from './pages/Reports';
+import Profile from './pages/Profile';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -33,6 +34,7 @@ function App() {
             <Route path="expenses" element={<Expenses />} />
             <Route path="budget" element={<Budget />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
         </Routes>
       </Router>

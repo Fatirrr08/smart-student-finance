@@ -11,15 +11,17 @@ const StatCard = ({ title, value, icon, type = "default", subtitle }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4 transition-transform hover:-translate-y-1 duration-200 cursor-default">
-      <div className={`p-4 rounded-xl ${getColors()}`}>
-        {icon}
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-3 sm:gap-4 transition-all hover:shadow-md hover:-translate-y-1 duration-200 cursor-default">
+      <div className={`p-3 sm:p-4 rounded-xl ${getColors()} shrink-0`}>
+        {React.cloneElement(icon, { size: window.innerWidth < 640 ? 20 : 24 })}
       </div>
-      <div>
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</h3>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
+      <div className="min-w-0">
+        <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{title}</h3>
+        <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mt-0.5 sm:mt-1 truncate">
+          {value}
+        </p>
         {subtitle && (
-           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{subtitle}</p>
+           <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5 sm:mt-1 truncate">{subtitle}</p>
         )}
       </div>
     </div>

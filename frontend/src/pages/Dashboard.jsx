@@ -279,49 +279,50 @@ const Dashboard = () => {
 
       {/* Charts Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 lg:col-span-2">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cash Flow (Mingguan)</h3>
-          <div className="h-72">
+        <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 lg:col-span-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cash Flow (Stats)</h3>
+          <div className="h-60 sm:h-72">
             <Bar data={barData} options={chartOptions} />
           </div>
         </div>
         
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pengeluaran per Kategori</h3>
-          <div className="h-64 flex justify-center">
+        <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pengeluaran Kategori</h3>
+          <div className="h-56 sm:h-64 flex justify-center">
             {catNames.length > 0 ? (
-              <Doughnut data={doughnutData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#374151' } } } }} />
+              <Doughnut data={doughnutData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 11 }, color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#374151' } } } }} />
             ) : (
-              <div className="flex items-center text-sm text-gray-400">Belum ada data pengeluaran</div>
+              <div className="flex items-center text-sm text-gray-400 italic">Belum ada data pengeluaran</div>
             )}
           </div>
         </div>
       </div>
 
       {/* Recent Transactions */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Transactions</h3>
+          <button className="text-primary text-sm font-medium hover:underline">Lihat Semua</button>
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {report.transactions && report.transactions.length > 0 ? (
             report.transactions.slice(0, 5).map((t) => {
               try {
                 return (
-                  <div key={t.id} className="flex justify-between items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-full ${t.type === 'income' ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-red-100 text-red-600 dark:bg-red-900/30'}`}>
-                         {t.type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                  <div key={t.id} className="flex justify-between items-center p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                      <div className={`p-2.5 sm:p-3 rounded-full shrink-0 ${t.type === 'income' ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-red-100 text-red-600 dark:bg-red-900/30'}`}>
+                         {t.type === 'income' ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
                       </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100">{t.category}</h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {t.date ? new Date(t.date).toLocaleDateString() : '-'} {t.note && `• ${t.note}`}
+                      <div className="min-w-0">
+                        <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 truncate">{t.category}</h4>
+                        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {t.date ? new Date(t.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'} {t.note && `• ${t.note}`}
                         </p>
                       </div>
                     </div>
-                    <div className={`font-semibold ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
+                    <div className={`font-bold text-sm sm:text-base whitespace-nowrap ml-2 ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
                       {t.type === 'income' ? '+Rp ' : '-Rp '}{formatCurrency(t.amount || 0)}
                     </div>
                   </div>
@@ -331,7 +332,7 @@ const Dashboard = () => {
               }
             })
           ) : (
-            <div className="text-center text-gray-500 py-6">Tidak ada transaksi bulan ini.</div>
+            <div className="text-center text-gray-500 py-10 italic text-sm">Tidak ada transaksi bulan ini.</div>
           )}
         </div>
       </div>

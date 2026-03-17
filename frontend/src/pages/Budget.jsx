@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PieChart, Save, Trash2 } from 'lucide-react';
+import { PieChart, Save, Trash2, Edit2 } from 'lucide-react';
 import { ref, onValue, set, remove } from 'firebase/database';
 import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -162,13 +162,26 @@ const Budget = () => {
 
                return (
                  <div key={b.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative group">
-                   <button 
-                     onClick={() => handleDelete(b.category)}
-                     className="absolute top-4 right-4 text-gray-400 hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity p-2"
-                     title="Hapus Budget"
-                   >
-                     <Trash2 size={16} />
-                   </button>
+                   <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                     <button 
+                       onClick={() => {
+                         setCategory(b.category);
+                         setLimit(b.monthly_limit);
+                         window.scrollTo({ top: 0, behavior: 'smooth' });
+                       }}
+                       className="text-gray-400 hover:text-primary p-2"
+                       title="Edit Budget"
+                     >
+                       <Edit2 size={16} />
+                     </button>
+                     <button 
+                       onClick={() => handleDelete(b.category)}
+                       className="text-gray-400 hover:text-danger p-2"
+                       title="Hapus Budget"
+                     >
+                       <Trash2 size={16} />
+                     </button>
+                   </div>
                    <div className="flex justify-between items-end mb-2">
                      <div>
                        <span className="font-semibold text-gray-900 dark:text-white">{b.category}</span>
