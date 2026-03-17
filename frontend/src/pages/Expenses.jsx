@@ -110,7 +110,13 @@ const Expenses = () => {
     }
   };
 
-  const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+  const formatCurrency = (val) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(val || 0);
+  };
 
   if (loading) return <div className="p-8 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
 
@@ -206,7 +212,7 @@ const Expenses = () => {
                       <td className="p-4 text-sm text-gray-500 dark:text-gray-400 min-w-[200px]">
                         {exp.note || '-'}
                       </td>
-                      <td className="p-4 text-sm font-semibold text-danger text-right whitespace-nowrap">-{formatCurrency(exp.amount || 0)}</td>
+                      <td className="p-4 text-sm font-semibold text-danger text-right whitespace-nowrap">-Rp {formatCurrency(exp.amount || 0)}</td>
                       <td className="p-4 flex justify-center gap-2">
                         <button onClick={() => handleDelete(exp.id)} className="text-gray-400 hover:text-danger p-2 transition-colors"><Trash2 size={18} /></button>
                       </td>

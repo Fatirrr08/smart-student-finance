@@ -75,7 +75,13 @@ const Reports = () => {
     return () => unsubscribe();
   }, [user, month]);
 
-  const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+  const formatCurrency = (val) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(val || 0);
+  };
 
   const exportCSV = () => {
     if (!report || !report.transactions) return;
@@ -141,14 +147,14 @@ const Reports = () => {
          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 md:col-span-2 flex items-center justify-between">
             <div>
                <p className="text-sm text-gray-500 dark:text-gray-400">Total Pemasukan</p>
-               <h3 className="text-2xl font-bold text-secondary">{formatCurrency(report.total_income)}</h3>
+               <h3 className="text-2xl font-bold text-secondary">Rp {formatCurrency(report.total_income)}</h3>
             </div>
             <div className="h-12 w-12 bg-green-50 dark:bg-green-900/20 text-secondary flex justify-center items-center rounded-xl font-bold text-xl">+</div>
          </div>
          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 md:col-span-2 flex items-center justify-between">
             <div>
                <p className="text-sm text-gray-500 dark:text-gray-400">Total Pengeluaran</p>
-               <h3 className="text-2xl font-bold text-danger">{formatCurrency(report.total_expense)}</h3>
+               <h3 className="text-2xl font-bold text-danger">Rp {formatCurrency(report.total_expense)}</h3>
             </div>
             <div className="h-12 w-12 bg-red-50 dark:bg-red-900/20 text-danger flex justify-center items-center rounded-xl font-bold text-xl">-</div>
          </div>
@@ -177,9 +183,9 @@ const Reports = () => {
                      <span className="font-semibold dark:text-white">{t.category}</span>
                      <p className="text-xs text-gray-500 mt-1">{t.date} • {t.note}</p>
                    </div>
-                   <div className={`font-bold ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
-                     {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
-                   </div>
+                    <div className={`font-bold ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
+                      {t.type === 'income' ? '+Rp ' : '-Rp '}{formatCurrency(t.amount)}
+                    </div>
                 </div>
              )) : (
                <div className="text-center text-gray-400 py-10">Tidak ada transaksi di bulan ini.</div>

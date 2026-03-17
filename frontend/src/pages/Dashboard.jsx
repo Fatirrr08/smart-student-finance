@@ -123,7 +123,13 @@ const Dashboard = () => {
     return <div className="flex h-full items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
   }
 
-  const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+  const formatCurrency = (val) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(val || 0);
+  };
 
   // Calculate Cash vs Bank splits
   const calculateSplits = () => {
@@ -230,7 +236,7 @@ const Dashboard = () => {
         <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.02]">
            <div>
              <p className="text-indigo-100 mb-1 flex items-center gap-2"><Landmark size={18}/> Saldo Bank & E-Wallet</p>
-             <h2 className="text-3xl font-bold">{formatCurrency(splits.bank)}</h2>
+             <h2 className="text-3xl font-bold">Rp {formatCurrency(splits.bank)}</h2>
            </div>
            <div className="bg-white/20 p-4 rounded-xl backdrop-blur-sm">
              <CreditCard size={32} />
@@ -240,7 +246,7 @@ const Dashboard = () => {
         <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.02]">
            <div>
              <p className="text-emerald-100 mb-1 flex items-center gap-2"><Banknote size={18}/> Uang Tunai (Cash)</p>
-             <h2 className="text-3xl font-bold">{formatCurrency(splits.cash)}</h2>
+             <h2 className="text-3xl font-bold">Rp {formatCurrency(splits.cash)}</h2>
            </div>
            <div className="bg-white/20 p-4 rounded-xl backdrop-blur-sm">
              <Wallet size={32} />
@@ -252,20 +258,20 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard 
           title="Total Balance" 
-          value={formatCurrency(report.balance)} 
+          value={`Rp ${formatCurrency(report.balance)}`} 
           icon={<Wallet size={24} />} 
           type="primary"
           subtitle="Sisa uang bulan ini"
         />
         <StatCard 
           title="Total Income" 
-          value={formatCurrency(report.total_income)} 
+          value={`Rp ${formatCurrency(report.total_income)}`} 
           icon={<TrendingUp size={24} />} 
           type="success"
         />
         <StatCard 
           title="Total Expense" 
-          value={formatCurrency(report.total_expense)} 
+          value={`Rp ${formatCurrency(report.total_expense)}`} 
           icon={<TrendingDown size={24} />} 
           type="danger"
         />
@@ -316,7 +322,7 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <div className={`font-semibold ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
-                      {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount || 0)}
+                      {t.type === 'income' ? '+Rp ' : '-Rp '}{formatCurrency(t.amount || 0)}
                     </div>
                   </div>
                 );
