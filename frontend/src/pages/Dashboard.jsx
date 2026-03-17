@@ -300,22 +300,30 @@ const Dashboard = () => {
         
         <div className="space-y-4">
           {report.transactions && report.transactions.length > 0 ? (
-            report.transactions.slice(0, 5).map((t) => (
-              <div key={t.id} className="flex justify-between items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-full ${t.type === 'income' ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-red-100 text-red-600 dark:bg-red-900/30'}`}>
-                     {t.type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+            report.transactions.slice(0, 5).map((t) => {
+              try {
+                return (
+                  <div key={t.id} className="flex justify-between items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-full ${t.type === 'income' ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-red-100 text-red-600 dark:bg-red-900/30'}`}>
+                         {t.type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100">{t.category}</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {t.date ? new Date(t.date).toLocaleDateString() : '-'} {t.note && `• ${t.note}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`font-semibold ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
+                      {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount || 0)}
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{t.category}</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(t.date).toLocaleDateString()} {t.note && `• ${t.note}`}</p>
-                  </div>
-                </div>
-                <div className={`font-semibold ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
-                  {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
-                </div>
-              </div>
-            ))
+                );
+              } catch (e) {
+                return null;
+              }
+            })
           ) : (
             <div className="text-center text-gray-500 py-6">Tidak ada transaksi bulan ini.</div>
           )}

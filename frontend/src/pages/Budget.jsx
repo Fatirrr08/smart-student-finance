@@ -131,39 +131,43 @@ const Budget = () => {
         <div className="lg:col-span-2 space-y-4">
           <h3 className="text-lg font-semibold dark:text-white">Progress Bulan Ini</h3>
           {budgets.length > 0 ? budgets.map(b => {
-             const spent = expenses[b.category] || 0;
-             const percent = Math.min((spent / b.monthly_limit) * 100, 100).toFixed(1);
-             const isOver = spent > b.monthly_limit;
-             const isWarning = percent >= 80 && !isOver;
+             try {
+               const spent = expenses[b.category] || 0;
+               const percent = Math.min((spent / (b.monthly_limit || 1)) * 100, 100).toFixed(1);
+               const isOver = spent > b.monthly_limit;
+               const isWarning = percent >= 80 && !isOver;
 
-             let barColor = "bg-primary";
-             if (isOver) barColor = "bg-danger";
-             else if (isWarning) barColor = "bg-yellow-500";
+               let barColor = "bg-primary";
+               if (isOver) barColor = "bg-danger";
+               else if (isWarning) barColor = "bg-yellow-500";
 
-             return (
-               <div key={b.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                 <div className="flex justify-between items-end mb-2">
-                   <div>
-                     <span className="font-semibold text-gray-900 dark:text-white">{b.category}</span>
-                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                       {formatCurrency(spent)} dari {formatCurrency(b.monthly_limit)}
-                     </p>
+               return (
+                 <div key={b.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                   <div className="flex justify-between items-end mb-2">
+                     <div>
+                       <span className="font-semibold text-gray-900 dark:text-white">{b.category}</span>
+                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                         {formatCurrency(spent)} dari {formatCurrency(b.monthly_limit)}
+                       </p>
+                     </div>
+                     <div className={`font-bold text-sm ${isOver ? 'text-danger' : isWarning ? 'text-yellow-600' : 'text-primary'}`}>
+                       {percent}%
+                     </div>
                    </div>
-                   <div className={`font-bold text-sm ${isOver ? 'text-danger' : isWarning ? 'text-yellow-600' : 'text-primary'}`}>
-                     {percent}%
+                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                     <div className={`${barColor} h-2.5 rounded-full transition-all duration-500`} style={{ width: `${percent}%` }}></div>
                    </div>
+                   {isOver && (
+                     <p className="text-xs text-danger mt-2">Peringatan: Kamu melebihi budget {b.category} bulan ini!</p>
+                   )}
+                   {isWarning && (
+                     <p className="text-xs text-yellow-600 mt-2">Hati-hati: Budget {b.category} hampir habis.</p>
+                   )}
                  </div>
-                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                   <div className={`${barColor} h-2.5 rounded-full transition-all duration-500`} style={{ width: `${percent}%` }}></div>
-                 </div>
-                 {isOver && (
-                   <p className="text-xs text-danger mt-2">Peringatan: Kamu melebihi budget {b.category} bulan ini!</p>
-                 )}
-                 {isWarning && (
-                   <p className="text-xs text-yellow-600 mt-2">Hati-hati: Budget {b.category} hampir habis.</p>
-                 )}
-               </div>
-             )
+               );
+             } catch (e) {
+               return null;
+             }
           }) : (
              <div className="bg-white dark:bg-gray-800 p-8 text-center text-gray-500 rounded-xl border border-gray-100 dark:border-gray-700">
                Belum ada budget yang diatur.

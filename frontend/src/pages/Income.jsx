@@ -183,21 +183,27 @@ const Income = () => {
               </tr>
             </thead>
             <tbody>
-              {incomes.length > 0 ? incomes.map((inc) => (
-                <tr key={inc.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">{new Date(inc.date).toLocaleDateString()}</td>
-                  <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                    <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded text-xs font-medium">
-                      {inc.category}
-                    </span>
-                  </td>
-                  <td className="p-4 text-sm text-gray-500 dark:text-gray-400 min-w-[200px]">{inc.note || '-'}</td>
-                  <td className="p-4 text-sm font-semibold text-secondary text-right whitespace-nowrap">+{formatCurrency(inc.amount)}</td>
-                  <td className="p-4 flex justify-center gap-2">
-                    <button onClick={() => handleDelete(inc.id)} className="text-gray-400 hover:text-danger p-2 transition-colors"><Trash2 size={18} /></button>
-                  </td>
-                </tr>
-              )) : (
+              {incomes.length > 0 ? incomes.map((inc) => {
+                try {
+                  return (
+                    <tr key={inc.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                      <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">{new Date(inc.date).toLocaleDateString()}</td>
+                      <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                        <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded text-xs font-medium">
+                          {inc.category}
+                        </span>
+                      </td>
+                      <td className="p-4 text-sm text-gray-500 dark:text-gray-400 min-w-[200px]">{inc.note || '-'}</td>
+                      <td className="p-4 text-sm font-semibold text-secondary text-right whitespace-nowrap">+{formatCurrency(inc.amount)}</td>
+                      <td className="p-4 flex justify-center gap-2">
+                        <button onClick={() => handleDelete(inc.id)} className="text-gray-400 hover:text-danger p-2 transition-colors"><Trash2 size={18} /></button>
+                      </td>
+                    </tr>
+                  );
+                } catch (e) {
+                  return null;
+                }
+              }) : (
                 <tr>
                   <td colSpan="5" className="p-8 text-center text-gray-500">Belum ada data pemasukan.</td>
                 </tr>
