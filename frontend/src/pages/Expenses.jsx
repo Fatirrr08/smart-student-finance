@@ -121,20 +121,20 @@ const Expenses = () => {
              <div>
                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Kategori</label>
                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                 <option>Makan</option>
-                 <option>Kos / Kontrakan</option>
-                 <option>Transportasi</option>
-                 <option>Jajan</option>
-                 <option>Hiburan</option>
-                 <option>Belanja</option>
-                 <option>Kebutuhan Kampus</option>
-                 <option>Tagihan / Cicilan</option>
-                 <option>Lainnya</option>
+                  <option>Makan</option>
+                  <option>Kos</option>
+                  <option>Transportasi</option>
+                  <option>Jajan</option>
+                  <option>Hiburan</option>
+                  <option>Belanja</option>
+                  <option>Kebutuhan Kampus</option>
+                  <option>Tagihan / Cicilan</option>
+                  <option>Lainnya</option>
                </select>
              </div>
              <div>
                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Metode Pembayaran</label>
-               <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <select value={source} onChange={(e) => setSource(e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                  <option>Cash</option>
                  <option>Transfer Bank / QRIS</option>
                  <option>SPayLater</option>

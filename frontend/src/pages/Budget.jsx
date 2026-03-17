@@ -105,6 +105,7 @@ const Budget = () => {
                  <option>Hiburan</option>
                  <option>Belanja</option>
                  <option>Kebutuhan Kampus</option>
+                 <option>Tagihan / Cicilan</option>
                  <option>Lainnya</option>
                </select>
              </div>
