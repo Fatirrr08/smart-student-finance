@@ -61,7 +61,9 @@ const Income = () => {
         createdAt: new Date().toISOString() // Add a timestamp
       };
 
-      const incomesRef = ref(db, `transactions/${user.id}`);
+      console.log("Adding transaction for user:", user);
+      const incomesRef = ref(db, `transactions/${user.id || user.uid}`);
+      console.log("Target path:", `transactions/${user.id || user.uid}`);
       await push(incomesRef, newTransaction);
       
       // Reset form state
