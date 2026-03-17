@@ -16,8 +16,10 @@ import { ref, onValue } from 'firebase/database';
 import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 import StatCard from '../components/StatCard';
-import { TrendingUp, TrendingDown, CreditCard, Activity, Landmark, Banknote, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, CreditCard, Activity, Landmark, Banknote, ArrowUpCircle, ArrowDownCircle, Calendar } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import GlobalFilter from '../components/GlobalFilter';
+import { isCurrentWeek, isCurrentMonth } from '../utils/dateUtils';
 
 ChartJS.register(
   CategoryScale,
@@ -41,6 +43,7 @@ const Dashboard = () => {
     transactions: []
   });
   const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState('monthly'); // 'weekly' or 'monthly'
 
   useEffect(() => {
     if (!user) {
@@ -73,14 +76,16 @@ const Dashboard = () => {
           
           transList.forEach(t => {
             const amt = parseFloat(t.amount) || 0;
-            const isCurrentMonth = t.date && t.date.startsWith(currentMonth);
+            const isMatch = filterType === 'weekly' 
+              ? isCurrentWeek(t.date) 
+              : isCurrentMonth(t.date);
             
             if (t.type === 'income') {
               lifetimeIncome += amt;
-              if (isCurrentMonth) monthlyIncome += amt;
+              if (isMatch) monthlyIncome += amt;
             } else {
               lifetimeExpense += amt;
-              if (isCurrentMonth) {
+              if (isMatch) {
                 monthlyExpense += amt;
                 if (t.category) {
                   catEx[t.category] = (catEx[t.category] || 0) + amt;
@@ -109,7 +114,7 @@ const Dashboard = () => {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, filterType]);
 
   if (loading) {
     return (
@@ -163,7 +168,7 @@ const Dashboard = () => {
   const barData = {
     labels: ['Income', 'Expense'],
     datasets: [{
-      label: 'Bulan Ini',
+      label: filterType === 'weekly' ? 'Minggu Ini' : 'Bulan Ini',
       data: [report.total_income, report.total_expense],
       backgroundColor: ['#10B981', '#E11D48'],
       borderRadius: 12,
@@ -191,9 +196,12 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8 pb-10">
-      <header>
-        <h1 className="text-3xl font-extrabold text-stone-900 dark:text-white tracking-tight">Overview</h1>
-        <p className="text-stone-500 dark:text-stone-400 font-medium">Halo! Cek performa keuangan bulanan kamu di sini.</p>
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div>
+          <h1 className="text-3xl font-extrabold text-stone-900 dark:text-white tracking-tight">Overview</h1>
+          <p className="text-stone-500 dark:text-stone-400 font-medium tracking-tight">Halo! Cek performa keuangan {filterType === 'weekly' ? 'mingguan' : 'bulanan'} kamu di sini.</p>
+        </div>
+        <GlobalFilter activeFilter={filterType} onFilterChange={setFilterType} />
       </header>
 
       {/* Smart Insight Banner */}
@@ -205,7 +213,7 @@ const Dashboard = () => {
           <div>
             <h4 className="font-bold text-lg">Smart Insight</h4>
             <p className="text-sm font-medium text-white/90">
-               Pengeluaran kamu bulan ini Rp {formatCurrency(report.total_expense)}, dan kategori terbesarmu adalah <b className="text-white underline decoration-emerald-400 underline-offset-4">{getLargestCategory()}</b>. Tetap bijak dalam berbelanja!
+               Pengeluaran kamu {filterType === 'weekly' ? 'minggu' : 'bulan'} ini Rp {formatCurrency(report.total_expense)}, dan kategori terbesarmu adalah <b className="text-white underline decoration-emerald-400 underline-offset-4">{getLargestCategory()}</b>. Tetap bijak dalam berbelanja!
             </p>
           </div>
         </div>
@@ -238,8 +246,8 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard title="Total Balance" value={`Rp ${formatCurrency(report.balance)}`} icon={<Activity size={24} />} type="primary" subtitle="Sisa seluruh aset" />
-        <StatCard title="Total Income" value={`Rp ${formatCurrency(report.total_income)}`} icon={<TrendingUp size={24} />} type="success" subtitle="Pemasukan bulan ini" />
-        <StatCard title="Total Expense" value={`Rp ${formatCurrency(report.total_expense)}`} icon={<TrendingDown size={24} />} type="danger" subtitle="Pengeluaran bulan ini" />
+        <StatCard title={`Total Income (${filterType === 'weekly' ? 'Week' : 'Month'})`} value={`Rp ${formatCurrency(report.total_income)}`} icon={<TrendingUp size={24} />} type="success" subtitle={`${filterType === 'weekly' ? 'Minggu' : 'Bulan'} ini`} />
+        <StatCard title={`Total Expense (${filterType === 'weekly' ? 'Week' : 'Month'})`} value={`Rp ${formatCurrency(report.total_expense)}`} icon={<TrendingDown size={24} />} type="danger" subtitle={`${filterType === 'weekly' ? 'Minggu' : 'Bulan'} ini`} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

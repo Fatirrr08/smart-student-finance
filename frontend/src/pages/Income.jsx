@@ -3,6 +3,8 @@ import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { ref, push, remove, onValue, set } from 'firebase/database';
 import { db, auth } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
+import GlobalFilter from '../components/GlobalFilter';
+import { isCurrentWeek, isCurrentMonth } from '../utils/dateUtils';
 
 const Income = () => {
   const { user } = useAuth();
@@ -10,6 +12,7 @@ const Income = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [filterType, setFilterType] = useState('monthly'); // 'weekly' or 'monthly'
   
   // Form State
   const [amount, setAmount] = useState('');
@@ -33,6 +36,11 @@ const Income = () => {
           const list = Object.keys(data)
             .map(key => ({ id: key, ...data[key] }))
             .filter(t => t.type === 'income')
+            .filter(t => {
+              if (filterType === 'weekly') return isCurrentWeek(t.date);
+              if (filterType === 'monthly') return isCurrentMonth(t.date);
+              return true;
+            })
             .sort((a, b) => {
               const dateA = a.date ? new Date(a.date) : 0;
               const dateB = b.date ? new Date(b.date) : 0;
@@ -54,7 +62,7 @@ const Income = () => {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, filterType]);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -149,21 +157,24 @@ const Income = () => {
   return (
     <div className="space-y-6 pb-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-extrabold text-stone-900 dark:text-white tracking-tight">Pemasukan</h1>
-          <p className="text-stone-500 dark:text-stone-400 font-medium mt-1">Catat semua sumber pemasukanmu.</p>
+          <p className="text-stone-500 dark:text-stone-400 font-medium mt-1 pr-4">Catat semua sumber pemasukan {filterType === 'weekly' ? 'mingguan' : 'bulanan'} kamu.</p>
         </div>
-        <button 
-          onClick={() => {
-            setEditId(null);
-            setAmount('');
-            setNote('');
-            setShowForm(!showForm);
-          }}
-          className="bg-primary hover:opacity-90 shadow-lg shadow-primary/20 text-white px-6 py-3 w-full sm:w-auto rounded-2xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95"
-        >
-          <Plus size={20} /> Tambah Pemasukan
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+          <GlobalFilter activeFilter={filterType} onFilterChange={setFilterType} />
+          <button 
+            onClick={() => {
+              setEditId(null);
+              setAmount('');
+              setNote('');
+              setShowForm(!showForm);
+            }}
+            className="bg-primary hover:opacity-90 shadow-lg shadow-primary/20 text-white px-6 py-3 w-full sm:w-auto rounded-2xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95 whitespace-nowrap"
+          >
+            <Plus size={20} /> Tambah Data
+          </button>
+        </div>
       </div>
 
       {showForm && (

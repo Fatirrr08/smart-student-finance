@@ -3,12 +3,15 @@ import { PieChart, Save, Trash2, Edit2 } from 'lucide-react';
 import { ref, onValue, set, remove } from 'firebase/database';
 import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
+import GlobalFilter from '../components/GlobalFilter';
+import { isCurrentWeek, isCurrentMonth } from '../utils/dateUtils';
 
 const Budget = () => {
   const { user } = useAuth();
   const [budgets, setBudgets] = useState([]);
   const [expenses, setExpenses] = useState({});
   const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState('monthly'); // 'weekly' or 'monthly'
 
   // Form
   const [category, setCategory] = useState('Makan');
@@ -21,8 +24,8 @@ const Budget = () => {
       return;
     }
     
-    // Listen to Budgets
-    const budgetsRef = ref(db, `budgets/${user?.id || user?.uid}`);
+    // Listen to Budgets for selected period
+    const budgetsRef = ref(db, `budgets/${user?.id || user?.uid}/${filterType}`);
     const unsubscribeBudgets = onValue(budgetsRef, (snapshot) => {
       try {
         const data = snapshot.val();
@@ -41,7 +44,7 @@ const Budget = () => {
       }
     });
 
-    // Listen to Transactions for real-time spending calculation
+    // Listen to Transactions for real-time spending calculation based on period
     const transactionsRef = ref(db, `transactions/${user?.id || user?.uid}`);
     const unsubscribeTrans = onValue(transactionsRef, (snapshot) => {
       try {
@@ -49,7 +52,8 @@ const Budget = () => {
         const spending = {};
         if (data) {
           Object.values(data).forEach(t => {
-            if (t.type === 'expense' && t.category) {
+            const isMatch = filterType === 'weekly' ? isCurrentWeek(t.date) : isCurrentMonth(t.date);
+            if (t.type === 'expense' && t.category && isMatch) {
               spending[t.category] = (spending[t.category] || 0) + (parseFloat(t.amount) || 0);
             }
           });
@@ -66,14 +70,14 @@ const Budget = () => {
       unsubscribeBudgets();
       unsubscribeTrans();
     };
-  }, [user]);
+  }, [user, filterType]);
 
   const handleSave = async (e) => {
     e.preventDefault();
     if (!user) return;
     
     try {
-      const budgetRef = ref(db, `budgets/${user?.id || user?.uid}/${category}`);
+      const budgetRef = ref(db, `budgets/${user?.id || user?.uid}/${filterType}/${category}`);
       await set(budgetRef, parseFloat(limit));
       
       setLimit('');
@@ -89,7 +93,7 @@ const Budget = () => {
     if (!user) return;
     
     try {
-      const budgetRef = ref(db, `budgets/${user?.id || user?.uid}/${catName}`);
+      const budgetRef = ref(db, `budgets/${user?.id || user?.uid}/${filterType}/${catName}`);
       await remove(budgetRef);
       alert('Budget berhasil dihapus!');
     } catch (err) {
@@ -110,11 +114,12 @@ const Budget = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-extrabold text-stone-900 dark:text-white tracking-tight">Budget Planner</h1>
-          <p className="text-stone-500 dark:text-stone-400 font-medium mt-1">Atur batas pengeluaran per kategori.</p>
+          <p className="text-stone-500 dark:text-stone-400 font-medium mt-1">Atur batas pengeluaran {filterType === 'weekly' ? 'mingguan' : 'bulanan'} kamu.</p>
         </div>
+        <GlobalFilter activeFilter={filterType} onFilterChange={setFilterType} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -138,7 +143,7 @@ const Budget = () => {
                </select>
              </div>
              <div>
-               <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Limit Bulanan (Rp)</label>
+               <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Limit {filterType === 'weekly' ? 'Mingguan' : 'Bulanan'} (Rp)</label>
                <input type="number" required value={limit} onChange={(e) => setLimit(e.target.value)} className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none" placeholder="0" />
              </div>
              <button type="submit" className="w-full py-4 bg-primary hover:opacity-90 shadow-lg shadow-primary/20 text-white rounded-2xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95">
@@ -148,7 +153,7 @@ const Budget = () => {
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <h3 className="text-xl font-bold text-stone-900 dark:text-white tracking-tight">Progress Bulan Ini</h3>
+          <h3 className="text-xl font-bold text-stone-900 dark:text-white tracking-tight">Progress {filterType === 'weekly' ? 'Minggu' : 'Bulan'} Ini</h3>
           {budgets.length > 0 ? budgets.map(b => {
              try {
                 const spent = expenses[b.category] || 0;
