@@ -102,10 +102,22 @@ const MainLayout = () => {
       </nav>
 
       {/* DEBUG OVERLAY */}
-      <div className="fixed bottom-20 left-4 z-[9999] bg-black/80 text-white text-[10px] p-2 rounded-lg border border-white/20 pointer-events-none md:bottom-4">
-        <p>VERSION: v1.3-HOTFIX</p>
-        <p>USER: {user ? (user.id || user.uid).substring(0, 8) + '...' : 'NONE'}</p>
+      <div className="fixed bottom-20 left-4 z-[9999] bg-black/80 text-white text-[10px] p-2 rounded-lg border border-white/20 pointer-events-auto md:bottom-4">
+        <p className="font-bold border-b border-white/20 pb-1 mb-1">DEV DEBUG v1.4</p>
+        <p>USER: {user ? (user.id || user.uid || 'ERR').substring(0, 5) : 'NONE'}</p>
         <p>STATUS: {user ? 'AUTH OK' : 'NO AUTH'}</p>
+        <button 
+          onClick={() => {
+            if(window.confirm("RESET APLIKASI?\nIni akan membersihkan cache browser bapak.")) {
+              localStorage.clear();
+              sessionStorage.clear();
+              window.location.reload(true);
+            }
+          }}
+          className="mt-2 w-full bg-red-600 hover:bg-red-700 text-[10px] py-1 px-2 rounded font-bold transition-colors"
+        >
+          FORCE RESET & REFRESH
+        </button>
       </div>
     </div>
   );
