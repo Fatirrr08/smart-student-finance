@@ -22,7 +22,7 @@ const Budget = () => {
     }
     
     // Listen to Budgets
-    const budgetsRef = ref(db, `budgets/${user.id || user.uid}`);
+    const budgetsRef = ref(db, `budgets/${user?.id || user?.uid}`);
     const unsubscribeBudgets = onValue(budgetsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -38,7 +38,7 @@ const Budget = () => {
     });
 
     // Listen to Transactions for real-time spending calculation
-    const transactionsRef = ref(db, `transactions/${user.id || user.uid}`);
+    const transactionsRef = ref(db, `transactions/${user?.id || user?.uid}`);
     const unsubscribeTrans = onValue(transactionsRef, (snapshot) => {
       const data = snapshot.val();
       const spending = {};
@@ -64,7 +64,7 @@ const Budget = () => {
     if (!user) return;
     
     try {
-      const budgetRef = ref(db, `budgets/${user.id || user.uid}/${category}`);
+      const budgetRef = ref(db, `budgets/${user?.id || user?.uid}/${category}`);
       await set(budgetRef, parseFloat(limit));
       
       setCategory('Makan');

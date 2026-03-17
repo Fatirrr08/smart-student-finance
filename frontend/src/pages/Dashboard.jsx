@@ -49,7 +49,7 @@ const Dashboard = () => {
     }
     
     setLoading(true);
-    const transactionsRef = ref(db, `transactions/${user.id || user.uid}`);
+    const transactionsRef = ref(db, `transactions/${user?.id || user?.uid}`);
     const unsubscribe = onValue(transactionsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {

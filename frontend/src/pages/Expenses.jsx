@@ -24,7 +24,7 @@ const Expenses = () => {
       return;
     }
     
-    const expensesRef = ref(db, `transactions/${user.id || user.uid}`);
+    const expensesRef = ref(db, `transactions/${user?.id || user?.uid}`);
     const unsubscribe = onValue(expensesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -61,7 +61,7 @@ const Expenses = () => {
         createdAt: new Date().toISOString()
       };
 
-      const expensesRef = ref(db, `transactions/${user.id || user.uid}`);
+      const expensesRef = ref(db, `transactions/${user?.id || user?.uid}`);
       await push(expensesRef, newTransaction);
       
       setAmount('');
@@ -82,7 +82,7 @@ const Expenses = () => {
     if (!user) return;
     
     try {
-      const itemRef = ref(db, `transactions/${user.id || user.uid}/${id}`);
+      const itemRef = ref(db, `transactions/${user?.id || user?.uid}/${id}`);
       await remove(itemRef);
       alert('Pengeluaran berhasil dihapus!');
     } catch (err) {
