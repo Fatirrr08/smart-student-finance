@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
-import { ref, push, remove, onValue } from 'firebase/database';
+import { ref, push, remove, onValue, set } from 'firebase/database';
 import { db, auth } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 
@@ -150,8 +150,8 @@ const Income = () => {
     <div className="space-y-6 pb-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Pemasukan</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Catat semua sumber pemasukanmu.</p>
+          <h1 className="text-3xl font-extrabold text-stone-900 dark:text-white tracking-tight">Pemasukan</h1>
+          <p className="text-stone-500 dark:text-stone-400 font-medium mt-1">Catat semua sumber pemasukanmu.</p>
         </div>
         <button 
           onClick={() => {
@@ -160,25 +160,25 @@ const Income = () => {
             setNote('');
             setShowForm(!showForm);
           }}
-          className="bg-primary hover:bg-indigo-700 text-white px-4 py-2 w-full sm:w-auto rounded-lg flex justify-center items-center gap-2 transition-colors"
+          className="bg-primary hover:opacity-90 shadow-lg shadow-primary/20 text-white px-6 py-3 w-full sm:w-auto rounded-2xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95"
         >
           <Plus size={20} /> Tambah Pemasukan
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 animate-fade-in-up">
-          <h3 className="text-lg font-semibold mb-4 dark:text-white">
+        <div className="bg-white dark:bg-darkbg p-6 sm:p-8 rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800 animate-fade-in-up">
+          <h3 className="text-xl font-bold mb-6 text-stone-900 dark:text-white tracking-tight">
             {editId ? 'Edit Data Pemasukan' : 'Tambah Data Pemasukan'}
           </h3>
-          <form className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" onSubmit={handleAdd}>
+          <form className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6" onSubmit={handleAdd}>
              <div>
-               <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Jumlah</label>
-               <input type="number" required value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Contoh: 500000" />
+               <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Jumlah (Rp)</label>
+               <input type="number" required value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none" placeholder="0" />
              </div>
              <div>
-               <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Kategori</label>
-               <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+               <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Kategori</label>
+               <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none appearance-none">
                  <option>Uang Bulanan</option>
                  <option>Beasiswa</option>
                  <option>Freelance</option>
@@ -187,65 +187,65 @@ const Income = () => {
                </select>
              </div>
              <div>
-               <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Simpan Ke</label>
-               <select value={destination} onChange={(e) => setDestination(e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+               <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Simpan Ke</label>
+               <select value={destination} onChange={(e) => setDestination(e.target.value)} className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none appearance-none">
                  <option>Saldo Bank</option>
                  <option>Cash / Tunai</option>
                  <option>E-Wallet (OVO/Dana/Gopay)</option>
                </select>
              </div>
              <div>
-               <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Tanggal</label>
-               <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+               <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Tanggal</label>
+               <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none" />
              </div>
              <div>
-               <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
-               <input type="text" value={note} onChange={(e) => setNote(e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Opsional" />
+               <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Catatan</label>
+               <input type="text" value={note} onChange={(e) => setNote(e.target.value)} className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none" placeholder="Opsional" />
              </div>
-             <div className="lg:col-span-5 flex flex-col-reverse sm:flex-row justify-end gap-2 mt-2">
-                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 mt-2 sm:mt-0">Batal</button>
-                <button type="submit" className="px-4 py-2 bg-secondary hover:bg-green-600 text-white rounded-md">Simpan</button>
+             <div className="lg:col-span-5 flex flex-col-reverse sm:flex-row justify-end gap-3 mt-4">
+                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-3 border border-stone-200 dark:border-stone-700 rounded-xl text-stone-600 hover:bg-stone-50 dark:text-stone-300 dark:hover:bg-stone-800 font-bold transition-all">Batal</button>
+                <button type="submit" className="px-8 py-3 bg-secondary hover:opacity-90 text-white rounded-xl font-bold shadow-lg shadow-secondary/20 transition-all active:scale-95">Simpan</button>
              </div>
           </form>
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-darkbg rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800 overflow-hidden">
         {/* Table View - Hidden on Mobile */}
         <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>
-              <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Tanggal</th>
-                <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Kategori</th>
-                <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Catatan/Tujuan</th>
-                <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300 text-right whitespace-nowrap">Jumlah</th>
-                <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300 text-center whitespace-nowrap">Aksi</th>
+              <tr className="bg-stone-50/50 dark:bg-stone-900/50 border-b border-stone-100 dark:border-stone-800">
+                <th className="p-5 text-[10px] font-black uppercase tracking-widest text-stone-400 whitespace-nowrap">Tanggal</th>
+                <th className="p-5 text-[10px] font-black uppercase tracking-widest text-stone-400 whitespace-nowrap">Kategori</th>
+                <th className="p-5 text-[10px] font-black uppercase tracking-widest text-stone-400">Catatan/Tujuan</th>
+                <th className="p-5 text-[10px] font-black uppercase tracking-widest text-stone-400 text-right whitespace-nowrap">Jumlah</th>
+                <th className="p-5 text-[10px] font-black uppercase tracking-widest text-stone-400 text-center whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {incomes.length > 0 ? incomes.map((inc) => (
-                <tr key={inc.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                  <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">{new Date(inc.date).toLocaleDateString('id-ID')}</td>
-                  <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                    <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded text-xs font-medium">
+                <tr key={inc.id} className="border-b border-stone-50 dark:border-stone-950/30 hover:bg-stone-50/50 dark:hover:bg-stone-900/30 transition-colors">
+                  <td className="p-5 text-sm font-bold text-stone-900 dark:text-stone-100 whitespace-nowrap">{new Date(inc.date).toLocaleDateString('id-ID')}</td>
+                  <td className="p-5 text-sm whitespace-nowrap">
+                    <span className="bg-secondary/10 text-secondary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">
                       {inc.category}
                     </span>
                   </td>
-                  <td className="p-4 text-sm text-gray-500 dark:text-gray-400 min-w-[200px]">{inc.note || '-'}</td>
-                  <td className="p-4 text-sm font-semibold text-secondary text-right whitespace-nowrap">+Rp {formatCurrency(inc.amount)}</td>
-                  <td className="p-4 flex justify-center gap-2">
-                    <button onClick={() => handleEdit(inc)} className="text-gray-400 hover:text-primary p-2 transition-colors">
+                  <td className="p-5 text-sm font-medium text-stone-500 dark:text-stone-400 min-w-[200px]">{inc.note || '-'}</td>
+                  <td className="p-5 text-lg font-black text-secondary text-right whitespace-nowrap tracking-tight">+Rp {formatCurrency(inc.amount)}</td>
+                  <td className="p-5 flex justify-center gap-2">
+                    <button onClick={() => handleEdit(inc)} className="text-stone-400 hover:text-primary p-2 transition-colors">
                       <Edit2 size={18} />
                     </button>
-                    <button onClick={() => handleDelete(inc.id)} className="text-gray-400 hover:text-danger p-2 transition-colors">
+                    <button onClick={() => handleDelete(inc.id)} className="text-stone-400 hover:text-danger p-2 transition-colors">
                       <Trash2 size={18} />
                     </button>
                   </td>
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan="5" className="p-8 text-center text-gray-500 italic">Belum ada data pemasukan.</td>
+                  <td colSpan="5" className="p-10 text-center text-stone-400 font-bold italic">Belum ada data pemasukan.</td>
                 </tr>
               )}
             </tbody>
@@ -253,42 +253,42 @@ const Income = () => {
         </div>
 
         {/* Card View - Mobile Only */}
-        <div className="sm:hidden divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="sm:hidden divide-y divide-stone-50 dark:divide-stone-900">
           {incomes.length > 0 ? incomes.map((inc) => (
-            <div key={inc.id} className="p-4 flex justify-between items-center group active:bg-gray-50 dark:active:bg-gray-700/50 transition-colors">
+            <div key={inc.id} className="p-5 flex justify-between items-center group active:bg-stone-50 dark:active:bg-stone-900/50 transition-colors">
               <div className="flex flex-col gap-1 min-w-0 pr-4" onClick={() => handleEdit(inc)}>
                 <div className="flex items-center gap-2">
-                   <span className="text-xs font-bold text-gray-400 uppercase tracking-tighter">
+                   <span className="text-[10px] font-black text-stone-400 uppercase tracking-tighter">
                      {new Date(inc.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
                    </span>
-                   <span className="text-xs font-bold text-secondary bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded">
+                   <span className="text-[10px] font-black text-secondary bg-secondary/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
                      {inc.category}
                    </span>
                 </div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                <h4 className="text-base font-bold text-stone-900 dark:text-white truncate">
                   {inc.note || 'Pemasukan'}
                 </h4>
-                <div className="text-base font-bold text-secondary">
+                <div className="text-xl font-black text-secondary tracking-tight">
                   +Rp {formatCurrency(inc.amount)}
                 </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <button 
                   onClick={() => handleEdit(inc)} 
-                  className="p-2.5 text-gray-400 hover:text-primary bg-gray-50 dark:bg-gray-700/50 rounded-full shrink-0"
+                  className="p-3 text-stone-400 hover:text-primary bg-stone-50 dark:bg-stone-900 rounded-2xl shrink-0 transition-colors"
                 >
                   <Edit2 size={18} />
                 </button>
                 <button 
                   onClick={() => handleDelete(inc.id)} 
-                  className="p-2.5 text-gray-400 hover:text-danger bg-gray-50 dark:bg-gray-700/50 rounded-full shrink-0"
+                  className="p-3 text-stone-400 hover:text-danger bg-stone-50 dark:bg-stone-900 rounded-2xl shrink-0 transition-colors"
                 >
                   <Trash2 size={18} />
                 </button>
               </div>
             </div>
           )) : (
-            <div className="p-10 text-center text-gray-500 italic text-sm">Belum ada data pemasukan.</div>
+            <div className="p-12 text-center text-stone-400 font-bold italic text-sm">Belum ada data pemasukan.</div>
           )}
         </div>
       </div>

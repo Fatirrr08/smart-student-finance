@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { ref, onValue, push } from 'firebase/database';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Wallet, Receipt, PieChart, LogOut, FileText, User } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Receipt, PieChart, LogOut, FileText, User } from 'lucide-react';
 
 const MainLayout = () => {
   const { logout, user } = useAuth();
@@ -11,7 +11,7 @@ const MainLayout = () => {
 
   const links = [
     { to: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-    { to: '/income', label: 'Pemasukan', icon: <Wallet size={20} /> },
+    { to: '/income', label: 'Pemasukan', icon: <TrendingUp size={20} /> },
     { to: '/expenses', label: 'Pengeluaran', icon: <Receipt size={20} /> },
     { to: '/budget', label: 'Budget', icon: <PieChart size={20} /> },
     { to: '/reports', label: 'Laporan', icon: <FileText size={20} /> },
@@ -24,11 +24,13 @@ const MainLayout = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background dark:bg-darkbg text-gray-900 dark:text-gray-100">
+    <div className="flex h-screen overflow-hidden bg-background dark:bg-darkbg text-stone-900 dark:text-stone-100 font-sans">
       {/* Sidebar Navigation - DESKTOP ONLY */}
-      <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-col hidden md:flex">
-        <div className="p-6 font-bold text-2xl text-primary flex items-center gap-2">
-          <Wallet className="text-primary" size={28} />
+      <aside className="w-64 bg-white dark:bg-darkbg border-r border-stone-100 dark:border-stone-800 flex-col hidden md:flex">
+        <div className="p-8 font-black text-2xl text-primary flex items-center gap-3 tracking-tighter">
+          <div className="bg-primary/10 p-2 rounded-xl">
+            <TrendingUp className="text-primary" size={24} />
+          </div>
           <span>SmartFin</span>
         </div>
         
@@ -71,7 +73,7 @@ const MainLayout = () => {
         <div className="md:hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center sticky top-0 z-40 shadow-sm">
           <div className="font-bold text-xl text-primary flex items-center gap-2">
             <div className="bg-primary/10 p-1.5 rounded-lg">
-              <Wallet size={20} className="text-primary" />
+              <TrendingUp size={20} className="text-primary" />
             </div>
             <span className="tracking-tight">SmartFin</span>
           </div>

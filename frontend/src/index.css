@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,16 +17,18 @@
     font-size: clamp(0.875rem, 0.8rem + 0.4vw, 1rem);
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
+    @apply antialiased;
   }
 
   body {
-    @apply bg-background text-gray-900 dark:bg-darkbg dark:text-gray-100 transition-colors duration-200 antialiased;
+    @apply bg-background text-dark dark:bg-darkbg dark:text-stone-100 transition-colors duration-200;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  h1 { @apply text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl; }
-  h2 { @apply text-2xl font-bold tracking-tight sm:text-3xl; }
-  h3 { @apply text-xl font-semibold sm:text-2xl; }
+  h1 { @apply text-stone-900 dark:text-white text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl; }
+  h2 { @apply text-stone-900 dark:text-white text-2xl font-bold tracking-tight sm:text-3xl; }
+  h3 { @apply text-stone-900 dark:text-white text-xl font-semibold sm:text-2xl; }
 }
 
 @layer utilities {

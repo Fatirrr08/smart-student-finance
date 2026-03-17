@@ -16,7 +16,8 @@ import { ref, onValue } from 'firebase/database';
 import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 import StatCard from '../components/StatCard';
-import { Wallet, TrendingUp, TrendingDown, CreditCard, Activity, Landmark, Banknote } from 'lucide-react';
+import { TrendingUp, TrendingDown, CreditCard, Activity, Landmark, Banknote, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 
 ChartJS.register(
   CategoryScale,
@@ -41,7 +42,6 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
 
-
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -65,7 +65,6 @@ const Dashboard = () => {
           const today = new Date();
           const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
           
-          // Calculate stats
           let lifetimeIncome = 0;
           let lifetimeExpense = 0;
           let monthlyIncome = 0;
@@ -99,28 +98,25 @@ const Dashboard = () => {
           });
         } else {
           setReport({
-            balance: 0,
-            total_income: 0,
-            total_expense: 0,
-            category_expenses: {},
-            transactions: []
+            balance: 0, total_income: 0, total_expense: 0, category_expenses: {}, transactions: []
           });
         }
       } catch (err) {
-        console.error("CRITICAL ERROR in Dashboard listener:", err);
+        console.error("Dashboard error:", err);
       } finally {
         setLoading(false);
       }
-    }, (error) => {
-      console.error("Firebase Dashboard error:", error);
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, [user]);
 
   if (loading) {
-    return <div className="flex h-full items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   const formatCurrency = (val) => {
@@ -131,11 +127,10 @@ const Dashboard = () => {
     }).format(val || 0);
   };
 
-  // Calculate Cash vs Bank splits
   const calculateSplits = () => {
     let cashFlow = 0;
     let bankFlow = 0;
-    if (report && report.transactions) {
+    if (report.transactions) {
       report.transactions.forEach(t => {
         const isCash = t.note && (t.note.includes('Cash') || t.note.includes('Tunai'));
         const amt = parseFloat(t.amount) || 0;
@@ -152,55 +147,40 @@ const Dashboard = () => {
   };
 
   const splits = calculateSplits();
-
-  // Doughnut Chart Data (Expense Categories)
   const catNames = Object.keys(report.category_expenses || {});
   const catVals = Object.values(report.category_expenses || {});
+
   const doughnutData = {
     labels: catNames,
-    datasets: [
-      {
-        data: catVals,
-        backgroundColor: ['#4F46E5', '#22C55E', '#EF4444', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'],
-        borderWidth: 0,
-        hoverOffset: 4
-      },
-    ],
+    datasets: [{
+      data: catVals,
+      backgroundColor: ['#4F46E5', '#10B981', '#E11D48', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'],
+      borderWidth: 0,
+      hoverOffset: 4
+    }]
   };
 
-  // Bar Chart Data (Daily/Weekly based on dates)
   const barData = {
     labels: ['Income', 'Expense'],
-    datasets: [
-      {
-        label: 'Statistik',
-        data: [report.total_income, report.total_expense],
-        backgroundColor: ['#22C55E', '#EF4444'],
-        borderRadius: 8,
-      }
-    ],
+    datasets: [{
+      label: 'Bulan Ini',
+      data: [report.total_income, report.total_expense],
+      backgroundColor: ['#10B981', '#E11D48'],
+      borderRadius: 12,
+      barThickness: 40,
+    }]
   };
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false }
-    },
+    plugins: { legend: { display: false } },
     scales: {
-      x: { 
-        grid: { display: false },
-        ticks: { color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280' }
-      },
-      y: { 
-        beginAtZero: true,
-        grid: { color: document.documentElement.classList.contains('dark') ? '#374151' : '#f3f4f6' },
-        ticks: { color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280' }
-      }
+      x: { grid: { display: false }, ticks: { font: { weight: '600' } } },
+      y: { beginAtZero: true, grid: { borderDash: [5, 5] } }
     }
   };
 
-  // Smart Insight simple calculation
   const getLargestCategory = () => {
     if (catNames.length === 0) return "Belum ada data";
     const maxVal = Math.max(...catVals);
@@ -210,130 +190,167 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Overview</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">Halo! Cek performa keuangan bulanan kamu di sini.</p>
+    <div className="space-y-8 pb-10">
+      <header>
+        <h1 className="text-3xl font-extrabold text-stone-900 dark:text-white tracking-tight">Overview</h1>
+        <p className="text-stone-500 dark:text-stone-400 font-medium">Halo! Cek performa keuangan bulanan kamu di sini.</p>
       </header>
 
       {/* Smart Insight Banner */}
       {report.total_expense > 0 && (
-        <div className="bg-indigo-600 dark:bg-primary rounded-2xl p-6 shadow-md text-white flex items-center gap-4 animate-fade-in-up">
-          <div className="bg-white/20 p-3 rounded-full">
-            <Activity size={24} />
+        <div className="bg-primary rounded-3xl p-6 shadow-xl shadow-primary/20 text-white flex items-center gap-5 border border-white/10 animate-fade-in-up">
+          <div className="bg-white/20 p-3.5 rounded-2xl backdrop-blur-md">
+            <Activity size={28} />
           </div>
           <div>
-            <h4 className="font-semibold text-white/90">Smart Insight</h4>
-            <p className="text-sm mt-1 text-white/80">
-               Pengeluaran kamu bulan ini Rp {formatCurrency(report.total_expense)}, dan kategori pengeluaran terbesarmu adalah <b>{getLargestCategory()}</b>. Tetap hemat ya!
+            <h4 className="font-bold text-lg">Smart Insight</h4>
+            <p className="text-sm font-medium text-white/90">
+               Pengeluaran kamu bulan ini Rp {formatCurrency(report.total_expense)}, dan kategori terbesarmu adalah <b className="text-white underline decoration-emerald-400 underline-offset-4">{getLargestCategory()}</b>. Tetap bijak dalam berbelanja!
             </p>
           </div>
         </div>
       )}
 
-      {/* Wallet Splitting Cards */}
+      {/* Wallet Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.02]">
-           <div>
-             <p className="text-indigo-100 mb-1 flex items-center gap-2"><Landmark size={18}/> Saldo Bank & E-Wallet</p>
-             <h2 className="text-3xl font-bold">Rp {formatCurrency(splits.bank)}</h2>
+        <div className="bg-primary rounded-[2rem] p-8 shadow-2xl shadow-primary/20 text-white flex justify-between items-center relative overflow-hidden group">
+           <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+           <div className="relative z-10">
+             <p className="text-indigo-100/80 mb-2 font-bold uppercase tracking-widest text-xs flex items-center gap-2"><Landmark size={16}/> Saldo Bank & E-Wallet</p>
+             <h2 className="text-4xl font-black tracking-tighter">Rp {formatCurrency(splits.bank)}</h2>
            </div>
-           <div className="bg-white/20 p-4 rounded-xl backdrop-blur-sm">
-             <CreditCard size={32} />
+           <div className="bg-white/15 p-5 rounded-2xl backdrop-blur-md relative z-10">
+             <CreditCard size={36} />
            </div>
         </div>
         
-        <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.02]">
-           <div>
-             <p className="text-emerald-100 mb-1 flex items-center gap-2"><Banknote size={18}/> Uang Tunai (Cash)</p>
-             <h2 className="text-3xl font-bold">Rp {formatCurrency(splits.cash)}</h2>
+        <div className="bg-secondary rounded-[2rem] p-8 shadow-2xl shadow-secondary/20 text-white flex justify-between items-center relative overflow-hidden group">
+           <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+           <div className="relative z-10">
+             <p className="text-emerald-50/80 mb-2 font-bold uppercase tracking-widest text-xs flex items-center gap-2"><Banknote size={16}/> Uang Tunai (Cash)</p>
+             <h2 className="text-4xl font-black tracking-tighter">Rp {formatCurrency(splits.cash)}</h2>
            </div>
-           <div className="bg-white/20 p-4 rounded-xl backdrop-blur-sm">
-             <Wallet size={32} />
+           <div className="bg-white/15 p-5 rounded-2xl backdrop-blur-md relative z-10">
+             <TrendingUp size={36} />
            </div>
         </div>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard 
-          title="Total Balance" 
-          value={`Rp ${formatCurrency(report.balance)}`} 
-          icon={<Wallet size={24} />} 
-          type="primary"
-          subtitle="Sisa uang bulan ini"
-        />
-        <StatCard 
-          title="Total Income" 
-          value={`Rp ${formatCurrency(report.total_income)}`} 
-          icon={<TrendingUp size={24} />} 
-          type="success"
-        />
-        <StatCard 
-          title="Total Expense" 
-          value={`Rp ${formatCurrency(report.total_expense)}`} 
-          icon={<TrendingDown size={24} />} 
-          type="danger"
-        />
+        <StatCard title="Total Balance" value={`Rp ${formatCurrency(report.balance)}`} icon={<Activity size={24} />} type="primary" subtitle="Sisa seluruh aset" />
+        <StatCard title="Total Income" value={`Rp ${formatCurrency(report.total_income)}`} icon={<TrendingUp size={24} />} type="success" subtitle="Pemasukan bulan ini" />
+        <StatCard title="Total Expense" value={`Rp ${formatCurrency(report.total_expense)}`} icon={<TrendingDown size={24} />} type="danger" subtitle="Pengeluaran bulan ini" />
       </div>
 
-      {/* Charts Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 lg:col-span-2">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cash Flow (Stats)</h3>
-          <div className="h-60 sm:h-72">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white dark:bg-darkbg p-8 rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-xl font-black text-stone-900 dark:text-white tracking-tight">Arus Kas</h3>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-secondary"></div>
+                <span className="text-[10px] font-black uppercase tracking-tighter text-stone-400">Income</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-danger"></div>
+                <span className="text-[10px] font-black uppercase tracking-tighter text-stone-400">Expense</span>
+              </div>
+            </div>
+          </div>
+          <div className="h-[300px]">
             <Bar data={barData} options={chartOptions} />
           </div>
         </div>
-        
-        <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pengeluaran Kategori</h3>
-          <div className="h-56 sm:h-64 flex justify-center">
+
+        <div className="bg-white dark:bg-darkbg p-8 rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800">
+          <h3 className="text-xl font-black text-stone-900 dark:text-white tracking-tight mb-8">Kategori Pengeluaran</h3>
+          <div className="h-[300px] flex items-center justify-center relative">
             {catNames.length > 0 ? (
-              <Doughnut data={doughnutData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 11 }, color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#374151' } } } }} />
+              <Doughnut data={doughnutData} options={{...chartOptions, plugins: { ...chartOptions.plugins, legend: { position: 'right', labels: { usePointStyle: true, padding: 20, font: { weight: 'bold', size: 11 } } } } }} />
             ) : (
-              <div className="flex items-center text-sm text-gray-400 italic">Belum ada data pengeluaran</div>
+              <div className="text-stone-400 italic font-medium">Belum ada data pengeluaran</div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Recent Transactions */}
-      <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Transactions</h3>
-          <button className="text-primary text-sm font-medium hover:underline">Lihat Semua</button>
-        </div>
-        
-        <div className="space-y-3 sm:space-y-4">
-          {report.transactions && report.transactions.length > 0 ? (
-            report.transactions.slice(0, 5).map((t) => {
-              try {
-                return (
-                  <div key={t.id} className="flex justify-between items-center p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700">
-                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                      <div className={`p-2.5 sm:p-3 rounded-full shrink-0 ${t.type === 'income' ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-red-100 text-red-600 dark:bg-red-900/30'}`}>
-                         {t.type === 'income' ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-black text-stone-900 dark:text-white tracking-tight">Transaksi Terakhir</h3>
+            <NavLink to="/income" className="text-sm font-bold text-primary hover:underline">Lihat Semua</NavLink>
+          </div>
+          <div className="bg-white dark:bg-darkbg rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800 overflow-hidden">
+            {report.transactions && report.transactions.length > 0 ? (
+              <div className="divide-y divide-stone-50 dark:divide-stone-900 transition-colors">
+                {report.transactions.slice(0, 5).map((t, idx) => (
+                  <div key={idx} className="p-5 flex items-center justify-between hover:bg-stone-50 transition-colors dark:hover:bg-stone-900/50">
+                    <div className="flex items-center gap-5">
+                      <div className={`p-3.5 rounded-2xl ${t.type === 'income' ? 'bg-secondary/10 text-secondary' : 'bg-danger/10 text-danger'}`}>
+                        {t.type === 'income' ? <ArrowUpCircle size={22} /> : <ArrowDownCircle size={22} />}
                       </div>
-                      <div className="min-w-0">
-                        <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 truncate">{t.category}</h4>
-                        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
-                          {t.date ? new Date(t.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'} {t.note && `• ${t.note}`}
-                        </p>
+                      <div>
+                        <p className="font-bold text-stone-900 dark:text-white">{t.note || (t.type === 'income' ? 'Pemasukan' : 'Pengeluaran')}</p>
+                        <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">{t.category}</p>
                       </div>
                     </div>
-                    <div className={`font-bold text-sm sm:text-base whitespace-nowrap ml-2 ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
-                      {t.type === 'income' ? '+Rp ' : '-Rp '}{formatCurrency(t.amount || 0)}
+                    <div className="text-right">
+                      <p className={`text-lg font-black tracking-tight ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
+                        {t.type === 'income' ? '+' : '-'}Rp {formatCurrency(t.amount)}
+                      </p>
+                      <p className="text-[10px] font-bold text-stone-400 uppercase">{t.date}</p>
                     </div>
                   </div>
-                );
-              } catch (e) {
-                return null;
-              }
-            })
-          ) : (
-            <div className="text-center text-gray-500 py-10 italic text-sm">Tidak ada transaksi bulan ini.</div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <div className="p-16 text-center text-stone-400 italic font-bold">Belum ada transaksi terbaru.</div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-darkbg p-8 rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800 h-fit">
+          <h3 className="text-xl font-black text-stone-900 dark:text-white tracking-tight mb-6">Style Guide</h3>
+          <p className="text-[10px] font-black text-stone-400 mb-6 uppercase tracking-[0.2em]">Design System (SmartFin)</p>
+          
+          <div className="space-y-8">
+            <div>
+              <p className="text-[10px] font-black text-stone-400 mb-4 uppercase tracking-widest">Color Palette</p>
+              <div className="grid grid-cols-5 gap-2">
+                <div className="group cursor-help">
+                  <div className="h-12 w-full rounded-xl bg-primary mb-2 shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform"></div>
+                  <p className="text-[8px] font-black text-center text-stone-500 uppercase">Primary</p>
+                </div>
+                <div className="group cursor-help">
+                  <div className="h-12 w-full rounded-xl bg-secondary mb-2 shadow-lg shadow-secondary/20 group-hover:scale-105 transition-transform"></div>
+                  <p className="text-[8px] font-black text-center text-stone-500 uppercase">Success</p>
+                </div>
+                <div className="group cursor-help">
+                  <div className="h-12 w-full rounded-xl bg-dark mb-2 group-hover:scale-105 transition-transform"></div>
+                  <p className="text-[8px] font-black text-center text-stone-500 uppercase">Charcoal</p>
+                </div>
+                <div className="group cursor-help">
+                  <div className="h-12 w-full rounded-xl bg-muted mb-2 group-hover:scale-105 transition-transform"></div>
+                  <p className="text-[8px] font-black text-center text-stone-500 uppercase">Stone</p>
+                </div>
+                <div className="group cursor-help">
+                  <div className="h-12 w-full rounded-xl bg-danger mb-2 shadow-lg shadow-danger/20 group-hover:scale-105 transition-transform"></div>
+                  <p className="text-[8px] font-black text-center text-stone-500 uppercase">Ruby</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-black text-stone-400 mb-4 uppercase tracking-widest">Typography</p>
+              <div className="space-y-3">
+                <p className="text-2xl font-black text-stone-900 dark:text-white tracking-tight">Inter Bold</p>
+                <div className="flex justify-between items-baseline">
+                  <p className="text-sm font-medium text-stone-500">Regular Text</p>
+                  <p className="text-xl font-black text-primary tracking-tighter">1,234,567</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

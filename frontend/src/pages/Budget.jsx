@@ -112,20 +112,20 @@ const Budget = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Budget Planner</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Atur batas pengeluaran per kategori.</p>
+          <h1 className="text-3xl font-extrabold text-stone-900 dark:text-white tracking-tight">Budget Planner</h1>
+          <p className="text-stone-500 dark:text-stone-400 font-medium mt-1">Atur batas pengeluaran per kategori.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 h-fit lg:sticky lg:top-8">
-          <h3 className="text-lg font-semibold mb-4 dark:text-white flex items-center gap-2">
-            <PieChart size={20} className="text-primary"/> Atur Budget
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="bg-white dark:bg-darkbg p-8 rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800 h-fit lg:sticky lg:top-8">
+          <h3 className="text-xl font-bold mb-6 text-stone-900 dark:text-white tracking-tight flex items-center gap-3">
+             <div className="p-2 bg-primary/10 rounded-xl text-primary"><PieChart size={20}/></div> Atur Budget
           </h3>
-          <form className="space-y-4" onSubmit={handleSave}>
+          <form className="space-y-6" onSubmit={handleSave}>
              <div>
-               <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Kategori</label>
-               <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+               <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Kategori</label>
+               <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none appearance-none">
                  <option>Makan</option>
                  <option>Kos</option>
                  <option>Transportasi</option>
@@ -138,77 +138,83 @@ const Budget = () => {
                </select>
              </div>
              <div>
-               <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Limit Bulanan (Rp)</label>
-               <input type="number" required value={limit} onChange={(e) => setLimit(e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Contoh: 1500000" />
+               <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Limit Bulanan (Rp)</label>
+               <input type="number" required value={limit} onChange={(e) => setLimit(e.target.value)} className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none" placeholder="0" />
              </div>
-             <button type="submit" className="w-full py-2 bg-primary hover:bg-indigo-700 text-white rounded-md flex justify-center items-center gap-2">
+             <button type="submit" className="w-full py-4 bg-primary hover:opacity-90 shadow-lg shadow-primary/20 text-white rounded-2xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95">
                 <Save size={18} /> Simpan Target
              </button>
           </form>
         </div>
 
-        <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-lg font-semibold dark:text-white">Progress Bulan Ini</h3>
+        <div className="lg:col-span-2 space-y-6">
+          <h3 className="text-xl font-bold text-stone-900 dark:text-white tracking-tight">Progress Bulan Ini</h3>
           {budgets.length > 0 ? budgets.map(b => {
              try {
-               const spent = expenses[b.category] || 0;
-               const percent = Math.min((spent / (b.monthly_limit || 1)) * 100, 100).toFixed(1);
-               const isOver = spent > b.monthly_limit;
-               const isWarning = percent >= 80 && !isOver;
+                const spent = expenses[b.category] || 0;
+                const percent = Math.min((spent / (b.monthly_limit || 1)) * 100, 100).toFixed(1);
+                const isOver = spent > b.monthly_limit;
+                const isWarning = percent >= 80 && !isOver;
 
-               let barColor = "bg-primary";
-               if (isOver) barColor = "bg-danger";
-               else if (isWarning) barColor = "bg-yellow-500";
+                let barColor = "bg-primary";
+                if (isOver) barColor = "bg-danger";
+                else if (isWarning) barColor = "bg-yellow-500";
 
-               return (
-                 <div key={b.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative group">
-                   <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <button 
-                       onClick={() => {
-                         setCategory(b.category);
-                         setLimit(b.monthly_limit);
-                         window.scrollTo({ top: 0, behavior: 'smooth' });
-                       }}
-                       className="text-gray-400 hover:text-primary p-2"
-                       title="Edit Budget"
-                     >
-                       <Edit2 size={16} />
-                     </button>
-                     <button 
-                       onClick={() => handleDelete(b.category)}
-                       className="text-gray-400 hover:text-danger p-2"
-                       title="Hapus Budget"
-                     >
-                       <Trash2 size={16} />
-                     </button>
-                   </div>
-                   <div className="flex justify-between items-end mb-2">
-                     <div>
-                       <span className="font-semibold text-gray-900 dark:text-white">{b.category}</span>
-                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                         Rp {formatCurrency(spent)} dari Rp {formatCurrency(b.monthly_limit)}
-                       </p>
-                     </div>
-                     <div className={`font-bold text-sm ${isOver ? 'text-danger' : isWarning ? 'text-yellow-600' : 'text-primary'}`}>
-                       {percent}%
-                     </div>
-                   </div>
-                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                     <div className={`${barColor} h-2.5 rounded-full transition-all duration-500`} style={{ width: `${percent}%` }}></div>
-                   </div>
-                   {isOver && (
-                     <p className="text-xs text-danger mt-2">Peringatan: Kamu melebihi budget {b.category} bulan ini!</p>
-                   )}
-                   {isWarning && (
-                     <p className="text-xs text-yellow-600 mt-2">Hati-hati: Budget {b.category} hampir habis.</p>
-                   )}
-                 </div>
-               );
+                return (
+                  <div key={b.id} className="bg-white dark:bg-darkbg p-6 rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800 relative group transition-all hover:shadow-md">
+                    <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => {
+                          setCategory(b.category);
+                          setLimit(b.monthly_limit);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="text-stone-400 hover:text-primary p-2.5 bg-stone-50 dark:bg-stone-900 rounded-xl transition-colors"
+                        title="Edit Budget"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(b.category)}
+                        className="text-stone-400 hover:text-danger p-2.5 bg-stone-50 dark:bg-stone-900 rounded-xl transition-colors"
+                        title="Hapus Budget"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                    <div className="flex justify-between items-end mb-4">
+                      <div>
+                        <span className="text-lg font-black text-stone-900 dark:text-white tracking-tight">{b.category}</span>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mt-1">
+                          Rp {formatCurrency(spent)} / Rp {formatCurrency(b.monthly_limit)}
+                        </p>
+                      </div>
+                      <div className={`text-xl font-black tracking-tight ${isOver ? 'text-danger' : isWarning ? 'text-yellow-600' : 'text-primary'}`}>
+                        {percent}%
+                      </div>
+                    </div>
+                    <div className="w-full bg-stone-100 dark:bg-stone-900 rounded-full h-3 overflow-hidden">
+                      <div className={`${barColor} h-3 rounded-full transition-all duration-700 ease-out`} style={{ width: `${percent}%` }}></div>
+                    </div>
+                    {isOver && (
+                      <p className="text-xs font-bold text-danger mt-3 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse"></div>
+                        Warning: Budget {b.category} terlampaui!
+                      </p>
+                    )}
+                    {isWarning && (
+                      <p className="text-xs font-bold text-yellow-600 mt-3 flex items-center gap-2">
+                         <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
+                         Limit: Budget {b.category} hampir habis.
+                      </p>
+                    )}
+                  </div>
+                );
              } catch (e) {
-               return null;
+                return null;
              }
           }) : (
-             <div className="bg-white dark:bg-gray-800 p-8 text-center text-gray-500 rounded-xl border border-gray-100 dark:border-gray-700">
+             <div className="bg-white dark:bg-darkbg p-16 text-center text-stone-400 font-bold italic rounded-[2rem] border border-stone-100 dark:border-stone-800">
                Belum ada budget yang diatur.
              </div>
           )}
