@@ -10,7 +10,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
@@ -21,6 +21,18 @@ const Register = () => {
     const res = await register(name, email, password);
     if (res.success) {
       navigate('/login');
+    } else {
+      setError(res.message);
+    }
+    setLoading(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError('');
+    const res = await loginWithGoogle();
+    if (res.success) {
+      navigate('/');
     } else {
       setError(res.message);
     }
@@ -108,9 +120,24 @@ const Register = () => {
                     Register
                   </>
                 )}
+            </div>
+
+            <div>
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className="w-full flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 mt-4"
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="mr-2 w-5 h-5" />
+                Sign in with Google
               </button>
             </div>
           </form>
+          
+          <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6 text-sm text-gray-500 dark:text-gray-400 text-center">
+             Sudah punya akun? <Link to="/login" className="text-primary hover:underline">Mulai kelola keuanganmu sekarang</Link>
+          </div>
         </div>
       </div>
     </div>

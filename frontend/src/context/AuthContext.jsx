@@ -4,7 +4,9 @@ import {
   createUserWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { auth } from '../services/firebase';
 
@@ -75,6 +77,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      const currentUser = userCredential.user;
+      setUser({
+        id: currentUser.uid,
+        name: currentUser.displayName || 'User',
+        email: currentUser.email
+      });
+      return { success: true };
+    } catch (error) {
+      console.error("Google Login error:", error);
+      return { 
+        success: false, 
+        message: error.message || 'Google Login failed' 
+      };
+    }
+  };
+
   const logout = async () => {
     try {
       await signOut(auth);
@@ -87,6 +109,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     login,
+    loginWithGoogle,
     register,
     logout,
     loading

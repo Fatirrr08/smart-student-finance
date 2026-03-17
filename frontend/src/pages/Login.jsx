@@ -9,7 +9,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -18,6 +18,18 @@ const Login = () => {
     setError('');
     
     const res = await login(email, password);
+    if (res.success) {
+      navigate('/');
+    } else {
+      setError(res.message);
+    }
+    setLoading(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError('');
+    const res = await loginWithGoogle();
     if (res.success) {
       navigate('/');
     } else {
@@ -92,14 +104,23 @@ const Login = () => {
                     Sign in
                   </>
                 )}
+            </div>
+
+            <div>
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className="w-full flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 mt-4"
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="mr-2 w-5 h-5" />
+                Sign in with Google
               </button>
             </div>
           </form>
           
-          {/* Demo User Info */}
           <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6 text-sm text-gray-500 dark:text-gray-400 text-center">
-             Since we are testing, to bypass API errors, <br/>
-             feel free to modify `src/context/AuthContext.jsx` to auto-login.
+             Silakan login menggunakan Email atau Google.
           </div>
         </div>
       </div>
