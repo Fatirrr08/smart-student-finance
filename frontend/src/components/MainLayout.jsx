@@ -1,10 +1,21 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { db } from '../services/firebase';
+import { ref, onValue } from 'firebase/database';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, Wallet, Receipt, PieChart, LogOut, FileText } from 'lucide-react';
 
 const MainLayout = () => {
   const { logout, user } = useAuth();
+  const [dbConnected, setDbConnected] = useState(false);
+
+  useEffect(() => {
+    const connectedRef = ref(db, ".info/connected");
+    const unsub = onValue(connectedRef, (snap) => {
+      setDbConnected(snap.val() === true);
+    });
+    return () => unsub();
+  }, []);
   const navigate = useNavigate();
 
   const links = [
@@ -105,6 +116,7 @@ const MainLayout = () => {
       <div className="fixed bottom-20 left-4 z-[9999] bg-black/80 text-white text-[10px] p-2 rounded-lg border border-white/20 pointer-events-auto md:bottom-4">
         <p className="font-bold border-b border-white/20 pb-1 mb-1">DEV DEBUG v1.4</p>
         <p>USER: {user ? (user.id || user.uid || 'ERR').substring(0, 5) : 'NONE'}</p>
+        <p>FIREBASE: {dbConnected ? 'CONNECTED ✅' : 'DISCONNECTED ❌'}</p>
         <p>STATUS: {user ? 'AUTH OK' : 'NO AUTH'}</p>
         <button 
           onClick={() => {

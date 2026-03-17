@@ -26,17 +26,26 @@ const Income = () => {
     
     const incomesRef = ref(db, `transactions/${user?.id || user?.uid}`);
     const unsubscribe = onValue(incomesRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const list = Object.keys(data)
-          .map(key => ({ id: key, ...data[key] }))
-          .filter(t => t.type === 'income')
-          .sort((a, b) => new Date(b.date) - new Date(a.date)); // Assuming 'date' field exists
-        setIncomes(list);
-      } else {
-        setIncomes([]);
+      try {
+        const data = snapshot.val();
+        if (data) {
+          const list = Object.keys(data)
+            .map(key => ({ id: key, ...data[key] }))
+            .filter(t => t.type === 'income')
+            .sort((a, b) => {
+              const dateA = a.date ? new Date(a.date) : 0;
+              const dateB = b.date ? new Date(b.date) : 0;
+              return dateB - dateA;
+            });
+          setIncomes(list);
+        } else {
+          setIncomes([]);
+        }
+      } catch (err) {
+        console.error("CRITICAL ERROR in Income listener:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }, (error) => {
       console.error("Failed to fetch incomes from Firebase:", error);
       setIncomes([]);

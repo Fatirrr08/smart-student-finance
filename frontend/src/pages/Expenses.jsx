@@ -28,17 +28,27 @@ const Expenses = () => {
     
     const expensesRef = ref(db, `transactions/${user?.id || user?.uid}`);
     const unsubscribe = onValue(expensesRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const list = Object.keys(data)
-          .map(key => ({ id: key, ...data[key] }))
-          .filter(t => t.type === 'expense')
-          .sort((a, b) => new Date(b.date) - new Date(a.date));
-        setExpenses(list);
-      } else {
-        setExpenses([]);
+      try {
+        const data = snapshot.val();
+        console.log("Raw Expenses Data:", data);
+        if (data) {
+          const list = Object.keys(data)
+            .map(key => ({ id: key, ...data[key] }))
+            .filter(t => t.type === 'expense')
+            .sort((a, b) => {
+              const dateA = a.date ? new Date(a.date) : 0;
+              const dateB = b.date ? new Date(b.date) : 0;
+              return dateB - dateA;
+            });
+          setExpenses(list);
+        } else {
+          setExpenses([]);
+        }
+      } catch (err) {
+        console.error("CRITICAL ERROR in Expenses listener:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }, (error) => {
       console.error("Failed to fetch expenses from Firebase:", error);
       setExpenses([]);
