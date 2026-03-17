@@ -282,84 +282,36 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-black text-stone-900 dark:text-white tracking-tight">Transaksi Terakhir</h3>
-            <NavLink to="/income" className="text-sm font-bold text-primary hover:underline">Lihat Semua</NavLink>
-          </div>
-          <div className="bg-white dark:bg-darkbg rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800 overflow-hidden">
-            {report.transactions && report.transactions.length > 0 ? (
-              <div className="divide-y divide-stone-50 dark:divide-stone-900 transition-colors">
-                {report.transactions.slice(0, 5).map((t, idx) => (
-                  <div key={idx} className="p-5 flex items-center justify-between hover:bg-stone-50 transition-colors dark:hover:bg-stone-900/50">
-                    <div className="flex items-center gap-5">
-                      <div className={`p-3.5 rounded-2xl ${t.type === 'income' ? 'bg-secondary/10 text-secondary' : 'bg-danger/10 text-danger'}`}>
-                        {t.type === 'income' ? <ArrowUpCircle size={22} /> : <ArrowDownCircle size={22} />}
-                      </div>
-                      <div>
-                        <p className="font-bold text-stone-900 dark:text-white">{t.note || (t.type === 'income' ? 'Pemasukan' : 'Pengeluaran')}</p>
-                        <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">{t.category}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className={`text-lg font-black tracking-tight ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
-                        {t.type === 'income' ? '+' : '-'}Rp {formatCurrency(t.amount)}
-                      </p>
-                      <p className="text-[10px] font-bold text-stone-400 uppercase">{t.date}</p>
-                    </div>
+      <div className="bg-white dark:bg-darkbg rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800 overflow-hidden">
+        <div className="p-8 border-b border-stone-50 dark:divide-stone-900 flex justify-between items-center">
+          <h3 className="text-xl font-black text-stone-900 dark:text-white tracking-tight">Transaksi Terakhir</h3>
+          <NavLink to="/income" className="text-sm font-bold text-primary hover:underline">Lihat Semua</NavLink>
+        </div>
+        {report.transactions && report.transactions.length > 0 ? (
+          <div className="divide-y divide-stone-50 dark:divide-stone-900 transition-colors">
+            {report.transactions.slice(0, 5).map((t, idx) => (
+              <div key={idx} className="p-5 flex items-center justify-between hover:bg-stone-50 transition-colors dark:hover:bg-stone-900/50">
+                <div className="flex items-center gap-5">
+                  <div className={`p-3.5 rounded-2xl ${t.type === 'income' ? 'bg-secondary/10 text-secondary' : 'bg-danger/10 text-danger'}`}>
+                    {t.type === 'income' ? <ArrowUpCircle size={22} /> : <ArrowDownCircle size={22} />}
                   </div>
-                ))}
+                  <div>
+                    <p className="font-bold text-stone-900 dark:text-white">{t.note || (t.type === 'income' ? 'Pemasukan' : 'Pengeluaran')}</p>
+                    <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">{t.category}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className={`text-lg font-black tracking-tight ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
+                    {t.type === 'income' ? '+' : '-'}Rp {formatCurrency(t.amount)}
+                  </p>
+                  <p className="text-[10px] font-bold text-stone-400 uppercase">{t.date}</p>
+                </div>
               </div>
-            ) : (
-              <div className="p-16 text-center text-stone-400 italic font-bold">Belum ada transaksi terbaru.</div>
-            )}
+            ))}
           </div>
-        </div>
-
-        <div className="bg-white dark:bg-darkbg p-8 rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800 h-fit">
-          <h3 className="text-xl font-black text-stone-900 dark:text-white tracking-tight mb-6">Style Guide</h3>
-          <p className="text-[10px] font-black text-stone-400 mb-6 uppercase tracking-[0.2em]">Design System (SmartFin)</p>
-          
-          <div className="space-y-8">
-            <div>
-              <p className="text-[10px] font-black text-stone-400 mb-4 uppercase tracking-widest">Color Palette</p>
-              <div className="grid grid-cols-5 gap-2">
-                <div className="group cursor-help">
-                  <div className="h-12 w-full rounded-xl bg-primary mb-2 shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform"></div>
-                  <p className="text-[8px] font-black text-center text-stone-500 uppercase">Primary</p>
-                </div>
-                <div className="group cursor-help">
-                  <div className="h-12 w-full rounded-xl bg-secondary mb-2 shadow-lg shadow-secondary/20 group-hover:scale-105 transition-transform"></div>
-                  <p className="text-[8px] font-black text-center text-stone-500 uppercase">Success</p>
-                </div>
-                <div className="group cursor-help">
-                  <div className="h-12 w-full rounded-xl bg-dark mb-2 group-hover:scale-105 transition-transform"></div>
-                  <p className="text-[8px] font-black text-center text-stone-500 uppercase">Charcoal</p>
-                </div>
-                <div className="group cursor-help">
-                  <div className="h-12 w-full rounded-xl bg-muted mb-2 group-hover:scale-105 transition-transform"></div>
-                  <p className="text-[8px] font-black text-center text-stone-500 uppercase">Stone</p>
-                </div>
-                <div className="group cursor-help">
-                  <div className="h-12 w-full rounded-xl bg-danger mb-2 shadow-lg shadow-danger/20 group-hover:scale-105 transition-transform"></div>
-                  <p className="text-[8px] font-black text-center text-stone-500 uppercase">Ruby</p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-black text-stone-400 mb-4 uppercase tracking-widest">Typography</p>
-              <div className="space-y-3">
-                <p className="text-2xl font-black text-stone-900 dark:text-white tracking-tight">Inter Bold</p>
-                <div className="flex justify-between items-baseline">
-                  <p className="text-sm font-medium text-stone-500">Regular Text</p>
-                  <p className="text-xl font-black text-primary tracking-tighter">1,234,567</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        ) : (
+          <div className="p-16 text-center text-stone-400 italic font-bold">Belum ada transaksi terbaru.</div>
+        )}
       </div>
     </div>
   );
