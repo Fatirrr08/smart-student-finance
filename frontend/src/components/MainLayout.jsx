@@ -100,6 +100,13 @@ const MainLayout = () => {
           </NavLink>
         ))}
       </nav>
+
+      {/* DEBUG OVERLAY */}
+      <div className="fixed bottom-20 left-4 z-[9999] bg-black/80 text-white text-[10px] p-2 rounded-lg border border-white/20 pointer-events-none md:bottom-4">
+        <p>VERSION: v1.3-HOTFIX</p>
+        <p>USER: {user ? (user.id || user.uid).substring(0, 8) + '...' : 'NONE'}</p>
+        <p>STATUS: {user ? 'AUTH OK' : 'NO AUTH'}</p>
+      </div>
     </div>
   );
 };

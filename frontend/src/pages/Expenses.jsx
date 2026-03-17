@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext';
 
 const Expenses = () => {
   const { user } = useAuth();
+  console.log("Rendering Expenses Page... User:", user);
+  
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -179,23 +181,32 @@ const Expenses = () => {
               </tr>
             </thead>
             <tbody>
-              {expenses.length > 0 ? expenses.map((exp) => (
-                <tr key={exp.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">{new Date(exp.date).toLocaleDateString()}</td>
-                  <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                    <span className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded text-xs font-medium">
-                      {exp.category}
-                    </span>
-                  </td>
-                  <td className="p-4 text-sm text-gray-500 dark:text-gray-400 min-w-[200px]">
-                    {exp.note || '-'}
-                  </td>
-                  <td className="p-4 text-sm font-semibold text-danger text-right whitespace-nowrap">-{formatCurrency(exp.amount)}</td>
-                  <td className="p-4 flex justify-center gap-2">
-                    <button onClick={() => handleDelete(exp.id)} className="text-gray-400 hover:text-danger p-2 transition-colors"><Trash2 size={18} /></button>
-                  </td>
-                </tr>
-              )) : (
+              {expenses.length > 0 ? expenses.map((exp) => {
+                try {
+                  return (
+                    <tr key={exp.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                      <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                        {exp.date ? new Date(exp.date).toLocaleDateString('id-ID') : 'No Date'}
+                      </td>
+                      <td className="p-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                        <span className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded text-xs font-medium">
+                          {exp.category}
+                        </span>
+                      </td>
+                      <td className="p-4 text-sm text-gray-500 dark:text-gray-400 min-w-[200px]">
+                        {exp.note || '-'}
+                      </td>
+                      <td className="p-4 text-sm font-semibold text-danger text-right whitespace-nowrap">-{formatCurrency(exp.amount || 0)}</td>
+                      <td className="p-4 flex justify-center gap-2">
+                        <button onClick={() => handleDelete(exp.id)} className="text-gray-400 hover:text-danger p-2 transition-colors"><Trash2 size={18} /></button>
+                      </td>
+                    </tr>
+                  );
+                } catch (e) {
+                  console.error("Error rendering expense row:", e, exp);
+                  return null;
+                }
+              }) : (
                 <tr>
                   <td colSpan="5" className="p-8 text-center text-gray-500">Belum ada data pengeluaran.</td>
                 </tr>
