@@ -27,6 +27,7 @@ const MainLayout = () => {
         <div className="p-6 font-bold text-2xl text-primary flex items-center gap-2">
           <Wallet className="text-primary" size={28} />
           <span>SmartFin</span>
+          <span className="text-[10px] font-normal bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded ml-auto">v1.2-BUILT-NOW</span>
         </div>
         
         <nav className="flex-1 px-4 space-y-2 mt-4">
