@@ -24,33 +24,42 @@ const Budget = () => {
     // Listen to Budgets
     const budgetsRef = ref(db, `budgets/${user?.id || user?.uid}`);
     const unsubscribeBudgets = onValue(budgetsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const list = Object.keys(data).map(key => ({
-          id: key,
-          category: key,
-          monthly_limit: data[key]
-        }));
-        setBudgets(list);
-      } else {
-        setBudgets([]);
+      try {
+        const data = snapshot.val();
+        if (data) {
+          const list = Object.keys(data).map(key => ({
+            id: key,
+            category: key,
+            monthly_limit: parseFloat(data[key]) || 0
+          }));
+          setBudgets(list);
+        } else {
+          setBudgets([]);
+        }
+      } catch (err) {
+        console.error("CRITICAL ERROR in Budget listener:", err);
       }
     });
 
     // Listen to Transactions for real-time spending calculation
     const transactionsRef = ref(db, `transactions/${user?.id || user?.uid}`);
     const unsubscribeTrans = onValue(transactionsRef, (snapshot) => {
-      const data = snapshot.val();
-      const spending = {};
-      if (data) {
-        Object.values(data).forEach(t => {
-          if (t.type === 'expense') {
-            spending[t.category] = (spending[t.category] || 0) + (parseFloat(t.amount) || 0);
-          }
-        });
+      try {
+        const data = snapshot.val();
+        const spending = {};
+        if (data) {
+          Object.values(data).forEach(t => {
+            if (t.type === 'expense' && t.category) {
+              spending[t.category] = (spending[t.category] || 0) + (parseFloat(t.amount) || 0);
+            }
+          });
+        }
+        setExpenses(spending);
+      } catch (err) {
+        console.error("CRITICAL ERROR in Budget transactions listener:", err);
+      } finally {
+        setLoading(false);
       }
-      setExpenses(spending);
-      setLoading(false); // Set loading to false after both listeners have potentially fetched data
     });
 
     return () => {

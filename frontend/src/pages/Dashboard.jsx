@@ -51,55 +51,66 @@ const Dashboard = () => {
     setLoading(true);
     const transactionsRef = ref(db, `transactions/${user?.id || user?.uid}`);
     const unsubscribe = onValue(transactionsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const transList = Object.keys(data)
-          .map(key => ({ id: key, ...data[key] }))
-          .sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        const today = new Date();
-        const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        
-        // Calculate stats
-        let lifetimeIncome = 0;
-        let lifetimeExpense = 0;
-        let monthlyIncome = 0;
-        let monthlyExpense = 0;
-        const catEx = {};
-        
-        transList.forEach(t => {
-          const amt = parseFloat(t.amount) || 0;
-          const isCurrentMonth = t.date && t.date.startsWith(currentMonth);
+      try {
+        const data = snapshot.val();
+        if (data) {
+          const transList = Object.keys(data)
+            .map(key => ({ id: key, ...data[key] }))
+            .sort((a, b) => {
+              const dateA = a.date ? new Date(a.date) : 0;
+              const dateB = b.date ? new Date(b.date) : 0;
+              return dateB - dateA;
+            });
           
-          if (t.type === 'income') {
-            lifetimeIncome += amt;
-            if (isCurrentMonth) monthlyIncome += amt;
-          } else {
-            lifetimeExpense += amt;
-            if (isCurrentMonth) {
-              monthlyExpense += amt;
-              catEx[t.category] = (catEx[t.category] || 0) + amt;
+          const today = new Date();
+          const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+          
+          // Calculate stats
+          let lifetimeIncome = 0;
+          let lifetimeExpense = 0;
+          let monthlyIncome = 0;
+          let monthlyExpense = 0;
+          const catEx = {};
+          
+          transList.forEach(t => {
+            const amt = parseFloat(t.amount) || 0;
+            const isCurrentMonth = t.date && t.date.startsWith(currentMonth);
+            
+            if (t.type === 'income') {
+              lifetimeIncome += amt;
+              if (isCurrentMonth) monthlyIncome += amt;
+            } else {
+              lifetimeExpense += amt;
+              if (isCurrentMonth) {
+                monthlyExpense += amt;
+                if (t.category) {
+                  catEx[t.category] = (catEx[t.category] || 0) + amt;
+                }
+              }
             }
-          }
-        });
+          });
 
-        setReport({
-          balance: lifetimeIncome - lifetimeExpense,
-          total_income: monthlyIncome,
-          total_expense: monthlyExpense,
-          category_expenses: catEx,
-          transactions: transList
-        });
-      } else {
-        setReport({
-          balance: 0,
-          total_income: 0,
-          total_expense: 0,
-          category_expenses: {},
-          transactions: []
-        });
+          setReport({
+            balance: lifetimeIncome - lifetimeExpense,
+            total_income: monthlyIncome,
+            total_expense: monthlyExpense,
+            category_expenses: catEx,
+            transactions: transList
+          });
+        } else {
+          setReport({
+            balance: 0,
+            total_income: 0,
+            total_expense: 0,
+            category_expenses: {},
+            transactions: []
+          });
+        }
+      } catch (err) {
+        console.error("CRITICAL ERROR in Dashboard listener:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }, (error) => {
       console.error("Firebase Dashboard error:", error);
       setLoading(false);
