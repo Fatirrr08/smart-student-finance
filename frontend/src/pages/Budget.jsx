@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { PieChart, Save } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Budget = () => {
+  const { user } = useAuth();
   const [budgets, setBudgets] = useState([]);
   const [expenses, setExpenses] = useState({});
   const [loading, setLoading] = useState(true);
@@ -11,34 +13,34 @@ const Budget = () => {
   const [category, setCategory] = useState('Makan');
   const [limit, setLimit] = useState('');
 
-  const mockBudgets = [
-    { id: 1, category: 'Makan', monthly_limit: 1500000 },
-    { id: 2, category: 'Kos', monthly_limit: 500000 },
-    { id: 3, category: 'Transportasi', monthly_limit: 300000 },
-  ];
-
-  const mockExpenses = {
-    'Makan': 1200000,
-    'Kos': 500000,
-    'Transportasi': 450000, // over budget
-  };
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user]);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
-      const [bRes, rRes] = await Promise.all([
+      const [budgetRes, transRes] = await Promise.all([
         api.get('/budget'),
-        api.get(`/report/monthly?month=${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`)
+        api.get('/transactions?type=expense')
       ]);
-      setBudgets(bRes.data.data || []);
-      setExpenses(rRes.data.data.category_expenses || {});
+
+      const buds = (budgetRes.data.data || []).map(b => ({
+        id: b.id,
+        category: b.category,
+        monthly_limit: b.monthly_limit
+      }));
+
+      const spending = {};
+      (transRes.data.data || []).forEach(t => {
+        spending[t.category] = (spending[t.category] || 0) + (parseFloat(t.amount) || 0);
+      });
+
+      setBudgets(buds);
+      setExpenses(spending);
     } catch (err) {
-      console.warn("Using mock data for budgets");
-      setBudgets(mockBudgets);
-      setExpenses(mockExpenses);
+      console.error("Failed to fetch budget data:", err);
     } finally {
       setLoading(false);
     }
@@ -47,23 +49,21 @@ const Budget = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/budget', { category, monthly_limit: parseFloat(limit) });
+      await api.post('/budget', { 
+        category, 
+        monthly_limit: parseFloat(limit) 
+      });
+      setLimit('');
       fetchData();
-      setLimit('');
     } catch (err) {
-      const existing = budgets.find(b => b.category === category);
-      if (existing) {
-        setBudgets(budgets.map(b => b.category === category ? { ...b, monthly_limit: parseFloat(limit) } : b));
-      } else {
-        setBudgets([...budgets, { id: Date.now(), category, monthly_limit: parseFloat(limit) }]);
-      }
-      setLimit('');
+      console.error("Save failed:", err);
+      alert("Gagal menyimpan budget: " + (err.response?.data?.error || err.message));
     }
   };
 
   const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading) return <div className="p-8 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
 
   return (
     <div className="space-y-6">

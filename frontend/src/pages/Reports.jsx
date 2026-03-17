@@ -2,40 +2,43 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Download, FileText } from 'lucide-react';
 import { Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { useAuth } from '../context/AuthContext';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const Reports = () => {
-  const [report, setReport] = useState(null);
+  const { user } = useAuth();
+  const [report, setReport] = useState({
+    balance: 0,
+    total_income: 0,
+    total_expense: 0,
+    category_expenses: {},
+    transactions: []
+  });
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`);
 
-  const mockReport = {
-    balance: 3250000,
-    total_income: 5000000,
-    total_expense: 1750000,
-    category_expenses: {
-      "Makan": 800000,
-      "Kos": 500000,
-      "Transportasi": 150000,
-      "Jajan": 200000,
-      "Hiburan": 100000
-    },
-    transactions: [
-      { id: 1, type: "income", amount: 5000000, category: "Uang Bulanan", date: "2024-03-01", note: "Dari Ortu" },
-      { id: 2, type: "expense", amount: 500000, category: "Kos", date: "2024-03-02", note: "Bayar kos" },
-    ]
-  };
 
   useEffect(() => {
-    fetchData();
-  }, [month]);
+    fetchReportData();
+  }, [user, month]);
 
-  const fetchData = async () => {
+  const fetchReportData = async () => {
     setLoading(true);
     try {
       const res = await api.get(`/report/monthly?month=${month}`);
-      setReport(res.data.data);
+      if (res.data.data) {
+        setReport(res.data.data);
+      }
     } catch (err) {
-      setReport(mockReport);
+      console.error("Failed to fetch report data:", err);
+      setReport({ balance: 0, total_income: 0, total_expense: 0, category_expenses: {}, transactions: [] });
     } finally {
       setLoading(false);
     }
@@ -67,7 +70,7 @@ const Reports = () => {
     document.body.removeChild(link);
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading) return <div className="p-8 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
 
   const catNames = Object.keys(report.category_expenses || {});
   const catVals = Object.values(report.category_expenses || {});

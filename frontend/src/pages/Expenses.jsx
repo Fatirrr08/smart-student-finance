@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const Expenses = () => {
+  const { user } = useAuth();
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -14,23 +16,19 @@ const Expenses = () => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [note, setNote] = useState('');
 
-  const mockExpenses = [
-    { id: 1, amount: 50000, category: 'Makan', payment_method: 'Cash', date: '2024-03-01', note: 'Ayam Geprek' },
-    { id: 2, amount: 500000, category: 'Kos', payment_method: 'Transfer Bank', date: '2024-03-02', note: 'Bulanan' },
-    { id: 3, amount: 150000, category: 'Belanja', payment_method: 'SPayLater', date: '2024-03-05', note: 'Baju' },
-  ];
 
   useEffect(() => {
     fetchExpenses();
   }, []);
 
   const fetchExpenses = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/transactions?type=expense');
       setExpenses(res.data.data || []);
     } catch (err) {
-      console.warn("Using mock expenses");
-      setExpenses(mockExpenses);
+      console.error("Failed to fetch expenses:", err);
+      setExpenses([]);
     } finally {
       setLoading(false);
     }
@@ -39,24 +37,34 @@ const Expenses = () => {
   const handleAdd = async (e) => {
     e.preventDefault();
     const finalNote = paymentMethod !== 'Cash' ? `[${paymentMethod}] ${note}` : note;
+    const newTransaction = { 
+      type: 'expense', 
+      amount: parseFloat(amount), 
+      category, 
+      date, 
+      note: finalNote
+    };
+
     try {
-      await api.post('/transactions', { type: 'expense', amount: parseFloat(amount), category, date, note: finalNote });
+      await api.post('/transactions', newTransaction);
       setShowForm(false);
+      setAmount('');
+      setNote('');
       fetchExpenses();
     } catch (err) {
-      // simulate success for mock
-      const newExp = { id: Date.now(), amount: parseFloat(amount), category, date, note: finalNote };
-      setExpenses([newExp, ...expenses]);
-      setShowForm(false);
+      console.error("Post failed:", err);
+      alert("Gagal menyimpan data: " + (err.response?.data?.error || err.message));
     }
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus data ini?")) return;
     try {
       await api.delete(`/transactions/${id}`);
       fetchExpenses();
     } catch (err) {
-      setExpenses(expenses.filter(i => i.id !== id));
+      console.error("Delete failed:", err);
+      alert("Gagal menghapus data: " + (err.response?.data?.error || err.message));
     }
   };
 

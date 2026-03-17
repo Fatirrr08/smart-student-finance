@@ -12,6 +12,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import StatCard from '../components/StatCard';
 import { Wallet, TrendingUp, TrendingDown, CreditCard, Activity, Landmark, Banknote } from 'lucide-react';
@@ -29,46 +30,37 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
-  const [report, setReport] = useState(null);
+  const { user } = useAuth();
+  const [report, setReport] = useState({
+    balance: 0,
+    total_income: 0,
+    total_expense: 0,
+    category_expenses: {},
+    transactions: []
+  });
   const [loading, setLoading] = useState(true);
 
-  // Fallback realistic mock data to wow the user if backend is offline
-  const mockReport = {
-    balance: 3250000,
-    total_income: 5000000,
-    total_expense: 1750000,
-    category_expenses: {
-      "Makan": 800000,
-      "Kos": 500000,
-      "Transportasi": 150000,
-      "Jajan": 200000,
-      "Hiburan": 100000
-    },
-    transactions: [
-      { id: 1, type: "income", amount: 2000000, category: "Uang Bulanan", date: "2024-03-01", note: "[Ke: Saldo Bank] Dari Ortu" },
-      { id: 2, type: "income", amount: 3000000, category: "Freelance", date: "2024-03-02", note: "[Ke: Cash / Tunai] Project" },
-      { id: 3, type: "expense", amount: 500000, category: "Kos", date: "2024-03-02", note: "Bayar kos bulan ini" },
-      { id: 4, type: "expense", amount: 150000, category: "Makan", date: "2024-03-03", note: "[Cash] Makan di kampus" },
-      { id: 5, type: "expense", amount: 50000, category: "Jajan", date: "2024-03-05", note: "Kopi susu" },
-    ]
-  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const today = new Date();
-        const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        const res = await api.get(`/report/monthly?month=${month}`);
+    fetchDashboardData();
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    const today = new Date();
+    const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    
+    try {
+      const res = await api.get(`/report/monthly?month=${currentMonth}`);
+      if (res.data.data) {
         setReport(res.data.data);
-      } catch (err) {
-        console.warn("Backend not reachable or error. Using mock data for preview purposes.", err);
-        setReport(mockReport);
-      } finally {
-        setLoading(false);
       }
-    };
-    fetchData();
-  }, []);
+    } catch (err) {
+      console.error("Failed to fetch dashboard data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return <div className="flex h-full items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
@@ -80,16 +72,16 @@ const Dashboard = () => {
   const calculateSplits = () => {
     let cashFlow = 0;
     let bankFlow = 0;
-    // Basic heuristic: if note contains "[Ke: Cash", "[Cash]" -> cash, else bank
     if (report && report.transactions) {
       report.transactions.forEach(t => {
         const isCash = t.note && (t.note.includes('Cash') || t.note.includes('Tunai'));
+        const amt = parseFloat(t.amount) || 0;
         if (t.type === 'income') {
-           if (isCash) cashFlow += t.amount;
-           else bankFlow += t.amount;
+           if (isCash) cashFlow += amt;
+           else bankFlow += amt;
         } else {
-           if (isCash) cashFlow -= t.amount;
-           else bankFlow -= t.amount;
+           if (isCash) cashFlow -= amt;
+           else bankFlow -= amt;
         }
       });
     }
@@ -113,22 +105,16 @@ const Dashboard = () => {
     ],
   };
 
-  // Bar Chart Data (Weekly mock representation since it's just visual)
+  // Bar Chart Data (Daily/Weekly based on dates)
   const barData = {
-    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+    labels: ['Income', 'Expense'],
     datasets: [
       {
-        label: 'Income',
-        data: [report.total_income, 0, 0, 0], // simplified visualization
-        backgroundColor: '#22C55E',
-        borderRadius: 4,
-      },
-      {
-        label: 'Expense',
-        data: [report.total_expense * 0.4, report.total_expense * 0.2, report.total_expense * 0.3, report.total_expense * 0.1], // simplified visualization
-        backgroundColor: '#EF4444',
-        borderRadius: 4,
-      },
+        label: 'Statistik',
+        data: [report.total_income, report.total_expense],
+        backgroundColor: ['#22C55E', '#EF4444'],
+        borderRadius: 8,
+      }
     ],
   };
 
@@ -136,11 +122,18 @@ const Dashboard = () => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom', labels: { color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#374151' } }
+      legend: { display: false }
     },
     scales: {
-      x: { grid: { display: false }, ticks: { color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280' } },
-      y: { grid: { color: document.documentElement.classList.contains('dark') ? '#374151' : '#f3f4f6' }, ticks: { color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280' } }
+      x: { 
+        grid: { display: false },
+        ticks: { color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280' }
+      },
+      y: { 
+        beginAtZero: true,
+        grid: { color: document.documentElement.classList.contains('dark') ? '#374151' : '#f3f4f6' },
+        ticks: { color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280' }
+      }
     }
   };
 

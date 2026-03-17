@@ -8,7 +8,7 @@ const MainLayout = () => {
   const navigate = useNavigate();
 
   const links = [
-    { to: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+    { to: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { to: '/income', label: 'Pemasukan', icon: <Wallet size={20} /> },
     { to: '/expenses', label: 'Pengeluaran', icon: <Receipt size={20} /> },
     { to: '/budget', label: 'Budget', icon: <PieChart size={20} /> },
