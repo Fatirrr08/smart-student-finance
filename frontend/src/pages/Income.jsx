@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { ref, push, remove, onValue } from 'firebase/database';
-import { db } from '../services/firebase';
+import { db, auth } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 
 const Income = () => {

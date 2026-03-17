@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { ref, push, remove, onValue, set } from 'firebase/database';
-import { db } from '../services/firebase';
+import { db, auth } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 
 const Expenses = () => {
@@ -61,7 +61,14 @@ const Expenses = () => {
         createdAt: new Date().toISOString()
       };
 
-      const expensesRef = ref(db, `transactions/${user?.id || user?.uid}`);
+      const uid = user?.id || user?.uid;
+      const expensesRef = ref(db, `transactions/${uid}`);
+      
+      console.log("=== DEBUG EXPENSES V2 ===");
+      console.log("User Context:", user);
+      console.log("Firebase Auth UID:", auth.currentUser ? auth.currentUser.uid : "NULL");
+      console.log("Target Path:", `transactions/${uid}`);
+      
       await push(expensesRef, newTransaction);
       
       setAmount('');
