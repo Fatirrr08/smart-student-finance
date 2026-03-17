@@ -94,6 +94,11 @@ const Login = () => {
                   placeholder="••••••••"
                 />
               </div>
+              <div className="flex justify-end mt-2">
+                <Link to="/forgot-password" size="sm" className="text-xs font-bold text-primary hover:opacity-80 transition-opacity">
+                  Lupa Password?
+                </Link>
+              </div>
             </div>
 
             <div>

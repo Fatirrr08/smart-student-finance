@@ -4,7 +4,8 @@ import {
   createUserWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
-  updateProfile,
+  updatePassword,
+  sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
@@ -110,12 +111,43 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const resetPassword = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return { success: true };
+    } catch (error) {
+      console.error("Reset Password error:", error);
+      return { 
+        success: false, 
+        message: error.message || 'Failed to send reset email' 
+      };
+    }
+  };
+
+  const changePassword = async (newPassword) => {
+    try {
+      if (auth.currentUser) {
+        await updatePassword(auth.currentUser, newPassword);
+        return { success: true };
+      }
+      throw new Error("No user logged in");
+    } catch (error) {
+      console.error("Change Password error:", error);
+      return { 
+        success: false, 
+        message: error.message || 'Failed to update password' 
+      };
+    }
+  };
+
   const value = {
     user,
     login,
     loginWithGoogle,
     register,
     logout,
+    resetPassword,
+    changePassword,
     loading
   };
 
