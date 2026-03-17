@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, AlertCircle } from 'lucide-react';
 import { Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -121,74 +121,81 @@ const Reports = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+    <div className="space-y-8 animate-fade-in-up font-sans">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-2">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Laporan Bulanan</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Evaluasi keseluruhan aktivitas keuanganmu.</p>
+          <h1 className="text-3xl font-black text-stone-900 dark:text-white tracking-tighter">Laporan Bulanan</h1>
+          <p className="text-stone-500 dark:text-stone-400 font-medium mt-1">Evaluasi keseluruhan aktivitas keuanganmu.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <input 
             type="month" 
             value={month} 
             onChange={(e) => setMonth(e.target.value)} 
-            className="p-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+            className="p-3 border-transparent rounded-[1rem] bg-stone-50 dark:bg-stone-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 font-bold transition-all"
           />
           <button 
             onClick={exportCSV}
-            className="bg-primary hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+            className="bg-stone-900 dark:bg-stone-800 hover:opacity-90 text-white px-6 py-3 rounded-[1.25rem] flex items-center gap-2 font-bold shadow-lg shadow-stone-200 dark:shadow-none transition-all active:scale-95"
           >
-            <Download size={20} /> Export CSV
+            <Download size={20} /> Export
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-         <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 md:col-span-2 flex items-center justify-between">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+         <div className="bg-white dark:bg-darkbg p-6 rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800 md:col-span-2 flex items-center justify-between">
             <div>
-               <p className="text-sm text-gray-500 dark:text-gray-400">Total Pemasukan</p>
-               <h3 className="text-2xl font-bold text-secondary">Rp {formatCurrency(report.total_income)}</h3>
+               <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Total Pemasukan</p>
+               <h3 className="text-3xl font-black text-secondary">Rp {formatCurrency(report.total_income)}</h3>
             </div>
-            <div className="h-12 w-12 bg-green-50 dark:bg-green-900/20 text-secondary flex justify-center items-center rounded-xl font-bold text-xl">+</div>
+            <div className="h-14 w-14 bg-secondary/10 text-secondary flex justify-center items-center rounded-2xl font-black text-2xl shadow-inner">+</div>
          </div>
-         <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 md:col-span-2 flex items-center justify-between">
+         <div className="bg-white dark:bg-darkbg p-6 rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800 md:col-span-2 flex items-center justify-between">
             <div>
-               <p className="text-sm text-gray-500 dark:text-gray-400">Total Pengeluaran</p>
-               <h3 className="text-2xl font-bold text-danger">Rp {formatCurrency(report.total_expense)}</h3>
+               <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Total Pengeluaran</p>
+               <h3 className="text-3xl font-black text-danger">Rp {formatCurrency(report.total_expense)}</h3>
             </div>
-            <div className="h-12 w-12 bg-red-50 dark:bg-red-900/20 text-danger flex justify-center items-center rounded-xl font-bold text-xl">-</div>
+            <div className="h-14 w-14 bg-danger/10 text-danger flex justify-center items-center rounded-2xl font-black text-2xl shadow-inner">-</div>
          </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Distribusi Pengeluaran</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="bg-white dark:bg-darkbg p-8 rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800">
+          <h3 className="text-xl font-black text-stone-900 dark:text-white tracking-tight mb-8">Distribusi</h3>
           <div className="h-64 flex justify-center">
             {catNames.length > 0 ? (
-              <Doughnut data={doughnutData} options={{ maintainAspectRatio: false }} />
+              <Doughnut data={doughnutData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold' } } } } }} />
             ) : (
-              <div className="text-gray-400 text-sm flex items-center">Belum ada data</div>
+              <div className="text-stone-400 text-sm font-bold flex items-center gap-2">
+                <AlertCircle size={16}/> Belum ada data
+              </div>
             )}
           </div>
         </div>
 
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 h-96 overflow-y-auto">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <FileText size={20} className="text-primary"/> Rincian Transaksi
+        <div className="lg:col-span-2 bg-white dark:bg-darkbg p-8 rounded-[2rem] shadow-sm border border-stone-100 dark:border-stone-800 h-[32rem] overflow-y-auto custom-scrollbar">
+          <h3 className="text-xl font-black text-stone-900 dark:text-white tracking-tight mb-6 flex items-center gap-3">
+             <div className="p-2 bg-primary/10 rounded-xl text-primary"><FileText size={20}/></div> Rincian Transaksi
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-4">
              {report.transactions && report.transactions.length > 0 ? report.transactions.map(t => (
-                <div key={t.id} className="flex justify-between p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                <div key={t.id} className="flex justify-between items-center p-4 bg-stone-50 dark:bg-stone-900/50 rounded-2xl hover:scale-[1.01] transition-transform">
                    <div>
-                     <span className="font-semibold dark:text-white">{t.category}</span>
-                     <p className="text-xs text-gray-500 mt-1">{t.date} • {t.note}</p>
+                     <span className="font-black text-stone-900 dark:text-white">{t.category}</span>
+                     <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">{t.date} • {t.note}</p>
                    </div>
-                    <div className={`font-bold ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
-                      {t.type === 'income' ? '+Rp ' : '-Rp '}{formatCurrency(t.amount)}
+                    <div className={`text-lg font-black ${t.type === 'income' ? 'text-secondary' : 'text-danger'}`}>
+                      {t.type === 'income' ? '+' : '-'}Rp {formatCurrency(t.amount)}
                     </div>
                 </div>
              )) : (
-               <div className="text-center text-gray-400 py-10">Tidak ada transaksi di bulan ini.</div>
+               <div className="text-center text-stone-400 py-16 font-bold flex flex-col items-center gap-4">
+                 <div className="h-20 w-20 bg-stone-50 dark:bg-stone-900 rounded-full flex items-center justify-center">
+                   <FileText size={40} className="opacity-20"/>
+                 </div>
+                 Tidak ada transaksi di bulan ini.
+               </div>
              )}
           </div>
         </div>
