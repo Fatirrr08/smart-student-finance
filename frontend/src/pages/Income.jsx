@@ -64,7 +64,8 @@ const Income = () => {
       const uid = user.id || user.uid;
       const incomesRef = ref(db, `transactions/${uid}`);
       
-      console.log("=== DEBUG FIREBASE ===");
+      console.log("=== DEBUG FIREBASE V2 ===");
+      console.log("Timestamp:", new Date().toISOString());
       console.log("Current User Context:", user);
       console.log("Firebase Auth UID:", auth.currentUser ? auth.currentUser.uid : "NULL (NOT AUTHENTICATED)");
       console.log("Target Path:", `transactions/${uid}`);
@@ -90,7 +91,7 @@ const Income = () => {
     if (!user) return;
     
     try {
-      const itemRef = ref(db, `transactions/${user.id}/${id}`);
+      const itemRef = ref(db, `transactions/${user?.id || user?.uid}/${id}`);
       await remove(itemRef);
       alert('Pemasukan berhasil dihapus!');
     } catch (err) {
