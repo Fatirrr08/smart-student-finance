@@ -1,18 +1,25 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getDatabase } from 'firebase/database';
+import { getAnalytics } from "firebase/analytics";
 
 // Your web app's Firebase configuration
-// We will replace this with your actual config once provided.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  apiKey: "AIzaSyACfvD6NyEByyxnqlWmJcPY0FHIzwy_N8o",
+  authDomain: "web-keuangan-fcc15.firebaseapp.com",
   databaseURL: "https://web-keuangan-fcc15-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "web-keuangan-fcc15",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  storageBucket: "web-keuangan-fcc15.firebasestorage.app",
+  messagingSenderId: "358164304100",
+  appId: "1:358164304100:web:1be9ace679588142025cf1",
+  measurementId: "G-V0Z8T8PDC9"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getDatabase(app);
+export const analytics = getAnalytics(app);
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
