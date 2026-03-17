@@ -8,7 +8,6 @@ import { LayoutDashboard, Wallet, Receipt, PieChart, LogOut, FileText } from 'lu
 const MainLayout = () => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
-  const navigate = useNavigate();
 
   const links = [
     { to: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
