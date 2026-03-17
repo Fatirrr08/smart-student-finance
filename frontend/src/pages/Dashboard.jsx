@@ -12,8 +12,9 @@ import {
   Legend,
 } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
+import { ref, onValue } from 'firebase/database';
+import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
 import StatCard from '../components/StatCard';
 import { Wallet, TrendingUp, TrendingDown, CreditCard, Activity, Landmark, Banknote } from 'lucide-react';
 
@@ -42,25 +43,70 @@ const Dashboard = () => {
 
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [user]);
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    const today = new Date();
-    const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    
-    try {
-      const res = await api.get(`/report/monthly?month=${currentMonth}`);
-      if (res.data.data) {
-        setReport(res.data.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch dashboard data:", err);
-    } finally {
+    if (!user) {
       setLoading(false);
+      return;
     }
-  };
+    
+    setLoading(true);
+    const transactionsRef = ref(db, `transactions/${user.id}`);
+    const unsubscribe = onValue(transactionsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const transList = Object.keys(data)
+          .map(key => ({ id: key, ...data[key] }))
+          .sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        const today = new Date();
+        const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        
+        // Calculate stats
+        let lifetimeIncome = 0;
+        let lifetimeExpense = 0;
+        let monthlyIncome = 0;
+        let monthlyExpense = 0;
+        const catEx = {};
+        
+        transList.forEach(t => {
+          const amt = parseFloat(t.amount) || 0;
+          const isCurrentMonth = t.date && t.date.startsWith(currentMonth);
+          
+          if (t.type === 'income') {
+            lifetimeIncome += amt;
+            if (isCurrentMonth) monthlyIncome += amt;
+          } else {
+            lifetimeExpense += amt;
+            if (isCurrentMonth) {
+              monthlyExpense += amt;
+              catEx[t.category] = (catEx[t.category] || 0) + amt;
+            }
+          }
+        });
+
+        setReport({
+          balance: lifetimeIncome - lifetimeExpense,
+          total_income: monthlyIncome,
+          total_expense: monthlyExpense,
+          category_expenses: catEx,
+          transactions: transList
+        });
+      } else {
+        setReport({
+          balance: 0,
+          total_income: 0,
+          total_expense: 0,
+          category_expenses: {},
+          transactions: []
+        });
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Firebase Dashboard error:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   if (loading) {
     return <div className="flex h-full items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;

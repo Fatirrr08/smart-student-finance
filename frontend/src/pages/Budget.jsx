@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import api from '../services/api';
 import { PieChart, Save } from 'lucide-react';
+import { ref, onValue, set } from 'firebase/database';
+import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 
 const Budget = () => {
@@ -15,49 +16,63 @@ const Budget = () => {
 
 
   useEffect(() => {
-    fetchData();
-  }, [user]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [budgetRes, transRes] = await Promise.all([
-        api.get('/budget'),
-        api.get('/transactions?type=expense')
-      ]);
-
-      const buds = (budgetRes.data.data || []).map(b => ({
-        id: b.id,
-        category: b.category,
-        monthly_limit: b.monthly_limit
-      }));
-
-      const spending = {};
-      (transRes.data.data || []).forEach(t => {
-        spending[t.category] = (spending[t.category] || 0) + (parseFloat(t.amount) || 0);
-      });
-
-      setBudgets(buds);
-      setExpenses(spending);
-    } catch (err) {
-      console.error("Failed to fetch budget data:", err);
-    } finally {
-      setLoading(false);
+    if (!user) {
+      setLoading(false); // Ensure loading is false if no user
+      return;
     }
-  };
+    
+    // Listen to Budgets
+    const budgetsRef = ref(db, `budgets/${user.id}`);
+    const unsubscribeBudgets = onValue(budgetsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const list = Object.keys(data).map(key => ({
+          id: key,
+          category: key,
+          monthly_limit: data[key]
+        }));
+        setBudgets(list);
+      } else {
+        setBudgets([]);
+      }
+    });
+
+    // Listen to Transactions for real-time spending calculation
+    const transactionsRef = ref(db, `transactions/${user.id}`);
+    const unsubscribeTrans = onValue(transactionsRef, (snapshot) => {
+      const data = snapshot.val();
+      const spending = {};
+      if (data) {
+        Object.values(data).forEach(t => {
+          if (t.type === 'expense') {
+            spending[t.category] = (spending[t.category] || 0) + (parseFloat(t.amount) || 0);
+          }
+        });
+      }
+      setExpenses(spending);
+      setLoading(false); // Set loading to false after both listeners have potentially fetched data
+    });
+
+    return () => {
+      unsubscribeBudgets();
+      unsubscribeTrans();
+    };
+  }, [user]);
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!user) return;
+    
     try {
-      await api.post('/budget', { 
-        category, 
-        monthly_limit: parseFloat(limit) 
-      });
+      const budgetRef = ref(db, `budgets/${user.id}/${category}`);
+      await set(budgetRef, parseFloat(limit));
+      
+      setCategory('Makan');
       setLimit('');
-      fetchData();
+      alert('Budget saved successfully!');
     } catch (err) {
-      console.error("Save failed:", err);
-      alert("Gagal menyimpan budget: " + (err.response?.data?.error || err.message));
+      console.error("Failed to save budget:", err);
+      alert('Failed to save budget: ' + err.message);
     }
   };
 

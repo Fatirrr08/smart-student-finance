@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import api from '../services/api';
+import { ref, push, remove, onValue, set } from 'firebase/database';
+import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 
 const Expenses = () => {
@@ -12,59 +13,81 @@ const Expenses = () => {
   // Form State
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Makan');
-  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [source, setSource] = useState('Cash / Tunai'); // Changed from paymentMethod to source
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [note, setNote] = useState('');
 
 
   useEffect(() => {
-    fetchExpenses();
-  }, []);
-
-  const fetchExpenses = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get('/transactions?type=expense');
-      setExpenses(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to fetch expenses:", err);
-      setExpenses([]);
-    } finally {
+    if (!user) {
       setLoading(false);
+      return;
     }
-  };
+    
+    const expensesRef = ref(db, `transactions/${user.id}`);
+    const unsubscribe = onValue(expensesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const list = Object.keys(data)
+          .map(key => ({ id: key, ...data[key] }))
+          .filter(t => t.type === 'expense')
+          .sort((a, b) => new Date(b.date) - new Date(a.date));
+        setExpenses(list);
+      } else {
+        setExpenses([]);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Failed to fetch expenses from Firebase:", error);
+      setExpenses([]);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    const finalNote = paymentMethod !== 'Cash' ? `[${paymentMethod}] ${note}` : note;
-    const newTransaction = { 
-      type: 'expense', 
-      amount: parseFloat(amount), 
-      category, 
-      date, 
-      note: finalNote
-    };
-
+    if (!user) return;
+    
     try {
-      await api.post('/transactions', newTransaction);
-      setShowForm(false);
+      const finalNote = source !== 'Cash / Tunai' ? `[Dari: ${source}] ${note}` : `[Dari: Cash] ${note}`;
+      const newTransaction = { 
+        type: 'expense', 
+        amount: parseFloat(amount), 
+        category, 
+        date: date || new Date().toISOString().split('T')[0],
+        note: finalNote,
+        createdAt: new Date().toISOString()
+      };
+
+      const expensesRef = ref(db, `transactions/${user.id}`);
+      await push(expensesRef, newTransaction);
+      
       setAmount('');
+      setCategory('Makan');
+      setSource('Cash / Tunai');
+      setDate(new Date().toISOString().split('T')[0]);
       setNote('');
-      fetchExpenses();
+      setShowForm(false);
+      alert('Pengeluaran berhasil ditambahkan!');
     } catch (err) {
-      console.error("Post failed:", err);
-      alert("Gagal menyimpan data: " + (err.response?.data?.error || err.message));
+      console.error("Failed to add expense:", err);
+      alert('Gagal menambahkan pengeluaran: ' + err.message);
     }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Apakah Anda yakin ingin menghapus data ini?")) return;
+    if (!user) return;
+    
     try {
-      await api.delete(`/transactions/${id}`);
-      fetchExpenses();
+      const itemRef = ref(db, `transactions/${user.id}/${id}`);
+      await remove(itemRef);
+      alert('Pengeluaran berhasil dihapus!');
     } catch (err) {
-      console.error("Delete failed:", err);
-      alert("Gagal menghapus data: " + (err.response?.data?.error || err.message));
+      console.error("Failed to delete expense:", err);
+      alert('Gagal menghapus pengeluaran: ' + err.message);
     }
   };
 

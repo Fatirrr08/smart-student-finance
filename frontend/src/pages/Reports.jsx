@@ -8,6 +8,8 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { ref, onValue } from 'firebase/database';
+import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -26,23 +28,53 @@ const Reports = () => {
 
 
   useEffect(() => {
-    fetchReportData();
-  }, [user, month]);
-
-  const fetchReportData = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get(`/report/monthly?month=${month}`);
-      if (res.data.data) {
-        setReport(res.data.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch report data:", err);
-      setReport({ balance: 0, total_income: 0, total_expense: 0, category_expenses: {}, transactions: [] });
-    } finally {
+    if (!user) {
       setLoading(false);
+      return;
     }
-  };
+    
+    setLoading(true);
+    const transactionsRef = ref(db, `transactions/${user.id}`);
+    const unsubscribe = onValue(transactionsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const transList = Object.keys(data)
+          .map(key => ({ id: key, ...data[key] }))
+          .filter(t => t.date && t.date.startsWith(month))
+          .sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        let income = 0;
+        let expense = 0;
+        const catEx = {};
+        
+        transList.forEach(t => {
+          const amt = parseFloat(t.amount) || 0;
+          if (t.type === 'income') {
+            income += amt;
+          } else {
+            expense += amt;
+            catEx[t.category] = (catEx[t.category] || 0) + amt;
+          }
+        });
+
+        setReport({
+          balance: income - expense,
+          total_income: income,
+          total_expense: expense,
+          category_expenses: catEx,
+          transactions: transList
+        });
+      } else {
+        setReport({ balance: 0, total_income: 0, total_expense: 0, category_expenses: {}, transactions: [] });
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Firebase Reports error:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user, month]);
 
   const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
