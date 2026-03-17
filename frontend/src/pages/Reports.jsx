@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import api from '../services/api';
 import { Download, FileText } from 'lucide-react';
 import { Doughnut } from 'react-chartjs-2';
 import {
