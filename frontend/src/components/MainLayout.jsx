@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, push } from 'firebase/database';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, Wallet, Receipt, PieChart, LogOut, FileText } from 'lucide-react';
 
@@ -118,6 +118,20 @@ const MainLayout = () => {
         <p>USER: {user ? (user.id || user.uid || 'ERR').substring(0, 5) : 'NONE'}</p>
         <p>FIREBASE: {dbConnected ? 'CONNECTED ✅' : 'DISCONNECTED ❌'}</p>
         <p>STATUS: {user ? 'AUTH OK' : 'NO AUTH'}</p>
+        <button 
+          onClick={async () => {
+             try {
+               const testRef = ref(db, `debug_tests/${user?.id || user?.uid || 'temp'}`);
+               await push(testRef, { time: new Date().toISOString() });
+               alert("KONEKSI DATABASE: OKE ✅\nData berhasil dikirim!");
+             } catch(e) {
+               alert("KONEKSI DATABASE: GAGAL ❌\nError: " + e.message);
+             }
+          }}
+          className="mt-1 w-full bg-blue-600 hover:bg-blue-700 text-[10px] py-1 px-2 rounded font-bold transition-colors"
+        >
+          CEK KONEKSI (TEST DB)
+        </button>
         <button 
           onClick={() => {
             if(window.confirm("RESET APLIKASI?\nIni akan membersihkan cache browser bapak.")) {
