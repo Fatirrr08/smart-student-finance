@@ -7,15 +7,7 @@ import { LayoutDashboard, Wallet, Receipt, PieChart, LogOut, FileText } from 'lu
 
 const MainLayout = () => {
   const { logout, user } = useAuth();
-  const [dbConnected, setDbConnected] = useState(false);
-
-  useEffect(() => {
-    const connectedRef = ref(db, ".info/connected");
-    const unsub = onValue(connectedRef, (snap) => {
-      setDbConnected(snap.val() === true);
-    });
-    return () => unsub();
-  }, []);
+  const navigate = useNavigate();
   const navigate = useNavigate();
 
   const links = [
@@ -38,7 +30,6 @@ const MainLayout = () => {
         <div className="p-6 font-bold text-2xl text-primary flex items-center gap-2">
           <Wallet className="text-primary" size={28} />
           <span>SmartFin</span>
-          <span className="text-[10px] font-normal bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded ml-auto">v1.2-BUILT-NOW</span>
         </div>
         
         <nav className="flex-1 px-4 space-y-2 mt-4">
@@ -112,39 +103,6 @@ const MainLayout = () => {
         ))}
       </nav>
 
-      {/* DEBUG OVERLAY */}
-      <div className="fixed bottom-20 left-4 z-[9999] bg-black/80 text-white text-[10px] p-2 rounded-lg border border-white/20 pointer-events-auto md:bottom-4">
-        <p className="font-bold border-b border-white/20 pb-1 mb-1">DEV DEBUG v1.4</p>
-        <p>USER: {user ? (user.id || user.uid || 'ERR').substring(0, 5) : 'NONE'}</p>
-        <p>FIREBASE: {dbConnected ? 'CONNECTED ✅' : 'DISCONNECTED ❌'}</p>
-        <p>STATUS: {user ? 'AUTH OK' : 'NO AUTH'}</p>
-        <button 
-          onClick={async () => {
-             try {
-               const testRef = ref(db, `debug_tests/${user?.id || user?.uid || 'temp'}`);
-               await push(testRef, { time: new Date().toISOString() });
-               alert("KONEKSI DATABASE: OKE ✅\nData berhasil dikirim!");
-             } catch(e) {
-               alert("KONEKSI DATABASE: GAGAL ❌\nError: " + e.message);
-             }
-          }}
-          className="mt-1 w-full bg-blue-600 hover:bg-blue-700 text-[10px] py-1 px-2 rounded font-bold transition-colors"
-        >
-          CEK KONEKSI (TEST DB)
-        </button>
-        <button 
-          onClick={() => {
-            if(window.confirm("RESET APLIKASI?\nIni akan membersihkan cache browser bapak.")) {
-              localStorage.clear();
-              sessionStorage.clear();
-              window.location.reload(true);
-            }
-          }}
-          className="mt-2 w-full bg-red-600 hover:bg-red-700 text-[10px] py-1 px-2 rounded font-bold transition-colors"
-        >
-          FORCE RESET & REFRESH
-        </button>
-      </div>
     </div>
   );
 };
