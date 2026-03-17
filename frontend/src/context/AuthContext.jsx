@@ -5,11 +5,13 @@ import {
   signOut, 
   onAuthStateChanged,
   updatePassword,
+  updateProfile,
   sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { ref, set, onValue } from 'firebase/database';
+import { auth, db } from '../services/firebase';
 
 const AuthContext = createContext();
 
@@ -22,16 +24,26 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
-        setUser({
-          id: currentUser.uid,
-          uid: currentUser.uid,
-          name: currentUser.displayName || 'User',
-          email: currentUser.email
-        });
+        // Load additional data from DB
+        const dbRef = ref(db, `users/${currentUser.uid}`);
+        onValue(dbRef, (snapshot) => {
+          const dbData = snapshot.val() || {};
+          setUser({
+            id: currentUser.uid,
+            uid: currentUser.uid,
+            name: currentUser.displayName || dbData.name || 'User',
+            email: currentUser.email,
+            photoURL: currentUser.photoURL || dbData.photoURL,
+            phone: dbData.phone || '',
+            job: dbData.job || '',
+            bio: dbData.bio || ''
+          });
+          setLoading(false);
+        }, { onlyOnce: true });
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -139,6 +151,48 @@ export const AuthProvider = ({ children }) => {
       };
     }
   };
+  const updateUserProfile = async (profileData) => {
+    try {
+      if (auth.currentUser) {
+        // Update Firebase Auth (for displayName and photoURL)
+        const authUpdates = {};
+        if (profileData.displayName) authUpdates.displayName = profileData.displayName;
+        if (profileData.photoURL) authUpdates.photoURL = profileData.photoURL;
+        
+        if (Object.keys(authUpdates).length > 0) {
+          await updateProfile(auth.currentUser, authUpdates);
+        }
+
+        // Update Realtime Database (for bio, job, phone, name)
+        const dbRef = ref(db, `users/${auth.currentUser.uid}`);
+        await set(dbRef, {
+          name: profileData.displayName || user?.name || '',
+          email: auth.currentUser.email,
+          photoURL: profileData.photoURL || user?.photoURL || '',
+          phone: profileData.phone || user?.phone || '',
+          job: profileData.job || user?.job || '',
+          bio: profileData.bio || user?.bio || ''
+        });
+
+        // Local state will be updated via onAuthStateChanged or manual refresh
+        const updatedUser = auth.currentUser;
+        setUser(prev => ({
+          ...prev,
+          name: updatedUser.displayName,
+          photoURL: updatedUser.photoURL,
+          phone: profileData.phone || prev?.phone || '',
+          job: profileData.job || prev?.job || '',
+          bio: profileData.bio || prev?.bio || ''
+        }));
+        
+        return { success: true };
+      }
+      throw new Error("No user logged in");
+    } catch (error) {
+      console.error("Update Profile error:", error);
+      return { success: false, message: error.message };
+    }
+  };
 
   const value = {
     user,
@@ -148,6 +202,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     resetPassword,
     changePassword,
+    updateUserProfile,
     loading
   };
 

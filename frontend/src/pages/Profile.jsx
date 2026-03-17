@@ -1,16 +1,24 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Shield, Save, LogOut, Key, CheckCircle2, AlertCircle } from 'lucide-react';
-import { updateProfile } from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { User, Mail, Shield, Save, LogOut, Key, CheckCircle2, AlertCircle, Camera, Phone, Briefcase, FileText } from 'lucide-react';
+import { auth, storage } from '../services/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const Profile = () => {
-  const { user, logout, changePassword } = useAuth();
+  const { user, logout, changePassword, updateUserProfile } = useAuth();
   const [name, setName] = useState(user?.name || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [job, setJob] = useState(user?.job || '');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [photoURL, setPhotoURL] = useState(user?.photoURL || '');
+  
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [isChangingPass, setIsChangingPass] = useState(false);
+  
   const [message, setMessage] = useState({ type: '', text: '' });
   const [passMessage, setPassMessage] = useState({ type: '', text: '' });
 
@@ -20,14 +28,48 @@ const Profile = () => {
     setIsUpdating(true);
     setMessage({ type: '', text: '' });
     try {
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { displayName: name });
+      const res = await updateUserProfile({ 
+        displayName: name,
+        photoURL: photoURL,
+        phone,
+        job,
+        bio
+      });
+      if (res.success) {
         setMessage({ type: 'success', text: 'Profil berhasil diperbarui!' });
+      } else {
+        throw new Error(res.message);
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Gagal memperbarui profil: ' + error.message });
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      return setMessage({ type: 'error', text: 'Ukuran foto maksimal 2MB!' });
+    }
+
+    setIsUploading(true);
+    try {
+      const storageRef = ref(storage, `profiles/${user.uid}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setPhotoURL(url);
+      
+      // Auto update profile with new photo
+      await updateUserProfile({ photoURL: url });
+      setMessage({ type: 'success', text: 'Foto profil berhasil diunggah!' });
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Gagal mengunggah foto: ' + error.message });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -70,8 +112,18 @@ const Profile = () => {
             </div>
             <div className="px-8 pb-10">
               <div className="relative -mt-12 mb-8 flex items-end gap-6">
-                <div className="h-28 w-28 rounded-[2rem] bg-stone-50 dark:bg-stone-900 border-4 border-white dark:border-stone-900 shadow-xl flex items-center justify-center text-primary overflow-hidden">
-                   <span className="text-5xl font-black">{name.charAt(0).toUpperCase()}</span>
+                <div className="group relative">
+                  <div className="h-28 w-28 rounded-[2rem] bg-stone-50 dark:bg-stone-900 border-4 border-white dark:border-stone-900 shadow-xl flex items-center justify-center text-primary overflow-hidden">
+                    {photoURL ? (
+                      <img src={photoURL} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-5xl font-black">{name.charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} disabled={isUploading} />
+                    <Camera size={24} className={isUploading ? 'animate-bounce' : ''} />
+                  </label>
                 </div>
                 <div className="mb-2">
                   <h2 className="text-2xl font-black text-stone-900 dark:text-white tracking-tight">{name}</h2>
@@ -110,6 +162,45 @@ const Profile = () => {
                       value={user?.email} 
                       disabled
                       className="w-full p-3 bg-stone-100 dark:bg-stone-900/50 border-transparent rounded-xl text-stone-400 font-bold opacity-70 cursor-not-allowed outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 flex items-center gap-2">
+                      <Phone size={14} /> Nomor HP
+                    </label>
+                    <input 
+                      type="text" 
+                      value={phone} 
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none"
+                      placeholder="Contoh: 0812..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 flex items-center gap-2">
+                      <Briefcase size={14} /> Pekerjaan
+                    </label>
+                    <input 
+                      type="text" 
+                      value={job} 
+                      onChange={(e) => setJob(e.target.value)}
+                      className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none"
+                      placeholder="Contoh: Mahasiswa"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 flex items-center gap-2">
+                      <FileText size={14} /> Bio Singkat
+                    </label>
+                    <textarea 
+                      value={bio} 
+                      onChange={(e) => setBio(e.target.value)}
+                      rows="3"
+                      className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none resize-none"
+                      placeholder="Ceritakan sedikit tentang dirimu..."
                     />
                   </div>
                 </div>
