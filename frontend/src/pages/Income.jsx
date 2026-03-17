@@ -24,7 +24,7 @@ const Income = () => {
       return;
     }
     
-    const incomesRef = ref(db, `transactions/${user.id}`);
+    const incomesRef = ref(db, `transactions/${user.id || user.uid}`);
     const unsubscribe = onValue(incomesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
