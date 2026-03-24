@@ -10,7 +10,10 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   RecaptchaVerifier,
-  signInWithPhoneNumber
+  signInWithPhoneNumber,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink
 } from 'firebase/auth';
 import { ref, set, onValue, get } from 'firebase/database';
 import { auth, db } from '../services/firebase';
@@ -69,11 +72,71 @@ export const AuthProvider = ({ children }) => {
       clearTimeout(timer);
     });
 
+    const interceptMagicLink = async () => {
+      if (isSignInWithEmailLink(auth, window.location.href)) {
+        let email = window.localStorage.getItem('emailForSignIn');
+        if (!email) {
+          email = window.prompt('Tautan Ajaib terdeteksi. Silakan konfirmasi email Anda untuk melanjutkan:');
+        }
+        
+        if (email) {
+          setLoading(true);
+          try {
+            const result = await signInWithEmailLink(auth, email, window.location.href);
+            window.localStorage.removeItem('emailForSignIn');
+            
+            // Perbarui nama jika ada
+            const savedName = window.localStorage.getItem('nameForSignUp');
+            if (savedName && result.user) {
+              await updateProfile(result.user, { displayName: savedName });
+              // Perbarui RTDB juga
+              const dbRef = ref(db, `users/${result.user.uid}`);
+              await set(dbRef, {
+                name: savedName,
+                email: result.user.email,
+              });
+              window.localStorage.removeItem('nameForSignUp');
+            }
+          } catch (error) {
+            console.error('Error signing in with magic link:', error);
+            alert('Tautan sudah tidak berlaku atau salah. Silakan minta tautan baru.');
+          } finally {
+            setLoading(false);
+          }
+        }
+      }
+    };
+
+    interceptMagicLink();
+
     return () => {
       unsubscribe();
       clearTimeout(timer);
     };
   }, []);
+
+  const sendEmailLinkLogin = async (email, name = '') => {
+    try {
+      const actionCodeSettings = {
+        // Arahkan kembali ke /login agar UI Login yang memprosesnya jika redirect
+        url: window.location.origin + '/login',
+        handleCodeInApp: true,
+      };
+      
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      
+      // Simpan di memori browser
+      window.localStorage.setItem('emailForSignIn', email);
+      if (name) {
+        window.localStorage.setItem('nameForSignUp', name);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Magic Link error:", error);
+      return { success: false, message: error.message };
+    }
+  };
 
   const login = async (email, password) => {
     try {
@@ -294,7 +357,7 @@ export const AuthProvider = ({ children }) => {
           try {
             // Coba login dulu
             userCredential = await signInWithEmailAndPassword(auth, fakeEmail, fakePassword);
-          } catch (loginError) {
+          } catch {
             // Jika gagal (akun tidak ada), otomatis register
             userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, fakePassword);
           }
@@ -330,6 +393,7 @@ export const AuthProvider = ({ children }) => {
     setupRecaptcha,
     sendPhoneOTP,
     verifyPhoneOTP,
+    sendEmailLinkLogin,
     loading
   };
 

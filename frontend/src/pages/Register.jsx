@@ -8,14 +8,14 @@ const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [showOtpStep, setShowOtpStep] = useState(false);
   const [isSimulation, setIsSimulation] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { register, loginWithGoogle, setupRecaptcha, sendPhoneOTP, verifyPhoneOTP, updateUserProfile } = useAuth();
+  const { loginWithGoogle, setupRecaptcha, sendPhoneOTP, verifyPhoneOTP, updateUserProfile, sendEmailLinkLogin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,13 +26,19 @@ const Register = () => {
 
   const handleEmailRegister = async (e) => {
     e.preventDefault();
+    if (!email || !name) {
+      setError("Mohon isi Nama Lengkap dan Email");
+      return;
+    }
+    
     setLoading(true);
     setError('');
+    setSuccessMsg('');
     
-    // Direct Native Firebase Email/Password Registration (No OTP needed for email)
-    const res = await register(name, email, password);
+    // Direct Native Firebase Email Magic Link
+    const res = await sendEmailLinkLogin(email, name);
     if (res.success) {
-      navigate('/login');
+      setSuccessMsg(`Tautan Ajaib berhasil dikirim ke ${email}! Buka email Anda dan klik tautan tersebut untuk masuk.`);
     } else {
       setError(res.message);
     }
@@ -127,8 +133,13 @@ const Register = () => {
                 {error}
               </div>
             )}
+            {successMsg && (
+              <div className="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 p-4 rounded-xl text-sm text-center font-bold animate-pulse">
+                📨 {successMsg}
+              </div>
+            )}
 
-            {!showOtpStep ? (
+            {!showOtpStep && !successMsg ? (
               <>
                 <div className="flex bg-stone-100 dark:bg-stone-900 p-1 rounded-2xl mb-6">
                   <button
@@ -194,29 +205,11 @@ const Register = () => {
                     </div>
                   )}
                 </div>
-
-                {regMethod === 'email' && (
-                  <div className="mt-4 mb-2">
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">
-                      Password
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="password"
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                  </div>
-                )}
                 
                 {/* Firebase ReCAPTCHA Container */}
                 <div id="recaptcha-container" className="flex justify-center mt-4"></div>
               </>
-            ) : (
+            ) : showOtpStep ? (
               <div className="animate-in fade-in slide-in-from-bottom-4">
                 <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2 text-center">
                   Mengirim SMS ke {phone}...
@@ -241,36 +234,40 @@ const Register = () => {
                   Ganti nomor HP?
                 </button>
               </div>
+            ) : null}
+
+            {!successMsg && (
+              <div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-4 bg-primary hover:opacity-90 shadow-lg shadow-primary/20 text-white rounded-2xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : (
+                    <>
+                      <UserPlus className="mr-2" size={18} />
+                      {regMethod === 'email' 
+                        ? 'Kirim Tautan Ajaib (Tanpa Password)' 
+                        : (showOtpStep ? 'Verifikasi & Masuk' : 'Kirim SMS OTP')}
+                    </>
+                  )}
+                </button>
+              </div>
             )}
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-primary hover:opacity-90 shadow-lg shadow-primary/20 text-white rounded-2xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
-              >
-                {loading ? 'Processing...' : (
-                  <>
-                    <UserPlus className="mr-2" size={18} />
-                    {regMethod === 'email' 
-                      ? 'Daftar Sekarang' 
-                      : (showOtpStep ? 'Verifikasi & Masuk' : 'Kirim SMS OTP')}
-                  </>
-                )}
-              </button>
-            </div>
-
-            <div>
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                disabled={loading}
-                className="w-full py-4 bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-2xl font-bold text-stone-700 dark:text-stone-300 flex justify-center items-center gap-2 transition-all hover:bg-stone-50 dark:hover:bg-stone-800 active:scale-95 disabled:opacity-50 mt-4"
-              >
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="mr-2 w-5 h-5" />
-                Sign in with Google
-              </button>
-            </div>
+            {!successMsg && (
+              <div>
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={loading}
+                  className="w-full py-4 bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-2xl font-bold text-stone-700 dark:text-stone-300 flex justify-center items-center gap-2 transition-all hover:bg-stone-50 dark:hover:bg-stone-800 active:scale-95 disabled:opacity-50 mt-4"
+                >
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="mr-2 w-5 h-5" />
+                  Sign in with Google
+                </button>
+              </div>
+            )}
           </form>
           
           <div className="mt-8 border-t border-stone-100 dark:border-stone-800 pt-8 text-[10px] font-black uppercase tracking-widest text-stone-400 text-center">

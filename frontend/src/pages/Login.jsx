@@ -7,14 +7,14 @@ const Login = () => {
   const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'phone'
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [showOtpStep, setShowOtpStep] = useState(false);
   const [isSimulation, setIsSimulation] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { login, loginWithGoogle, setupRecaptcha, sendPhoneOTP, verifyPhoneOTP } = useAuth();
+  const { loginWithGoogle, setupRecaptcha, sendPhoneOTP, verifyPhoneOTP, sendEmailLinkLogin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,12 +25,19 @@ const Login = () => {
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
+    if (!email) {
+      setError("Mohon masukkan email Anda");
+      return;
+    }
+
     setLoading(true);
     setError('');
+    setSuccessMsg('');
     
-    const res = await login(email, password);
+    // Direct Native Firebase Email Magic Link
+    const res = await sendEmailLinkLogin(email);
     if (res.success) {
-      navigate('/');
+      setSuccessMsg(`Tautan Ajaib berhasil dikirim ke ${email}! Buka email Anda dan klik tautan tersebut untuk masuk.`);
     } else {
       setError(res.message);
     }
@@ -123,8 +130,13 @@ const Login = () => {
                 {error}
               </div>
             )}
+            {successMsg && (
+              <div className="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 p-4 rounded-xl text-sm text-center font-bold animate-pulse">
+                📨 {successMsg}
+              </div>
+            )}
 
-            {!showOtpStep ? (
+            {!showOtpStep && !successMsg ? (
               <>
                 <div className="flex bg-stone-100 dark:bg-stone-900 p-1 rounded-2xl mb-6">
                   <button
@@ -175,33 +187,10 @@ const Login = () => {
                   )}
                 </div>
 
-                {loginMethod === 'email' && (
-                  <div className="mt-4 mb-2">
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">
-                      Password
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="password"
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                    <div className="flex justify-end mt-2">
-                      <Link to="/forgot-password" size="sm" className="text-xs font-bold text-primary hover:opacity-80 transition-opacity">
-                        Lupa Password?
-                      </Link>
-                    </div>
-                  </div>
-                )}
-
                 {/* Firebase ReCAPTCHA Container */}
                 <div id="recaptcha-container" className="flex justify-center mt-4"></div>
               </>
-            ) : (
+            ) : showOtpStep ? (
               <div className="animate-in fade-in slide-in-from-bottom-4">
                 <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2 text-center">
                   Mengirim SMS ke {phone}...
@@ -226,36 +215,40 @@ const Login = () => {
                   Ganti nomor HP?
                 </button>
               </div>
+            ) : null}
+
+            {!successMsg && (
+              <div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-4 bg-primary hover:opacity-90 shadow-lg shadow-primary/20 text-white rounded-2xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : (
+                    <>
+                      <LogIn className="mr-2" size={18} />
+                      {loginMethod === 'email' 
+                        ? 'Kirim Tautan Ajaib (Tanpa Password)' 
+                        : (showOtpStep ? 'Verifikasi & Masuk' : 'Kirim SMS OTP')}
+                    </>
+                  )}
+                </button>
+              </div>
             )}
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-primary hover:opacity-90 shadow-lg shadow-primary/20 text-white rounded-2xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
-              >
-                {loading ? 'Processing...' : (
-                  <>
-                    <LogIn className="mr-2" size={18} />
-                    {loginMethod === 'email' 
-                      ? 'Login to Dashboard' 
-                      : (showOtpStep ? 'Verifikasi & Masuk' : 'Kirim SMS OTP')}
-                  </>
-                )}
-              </button>
-            </div>
-
-            <div>
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                disabled={loading}
-                className="w-full py-4 bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-2xl font-bold text-stone-700 dark:text-stone-300 flex justify-center items-center gap-2 transition-all hover:bg-stone-50 dark:hover:bg-stone-800 active:scale-95 disabled:opacity-50 mt-4"
-              >
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="mr-2 w-5 h-5" />
-                Sign in with Google
-              </button>
-            </div>
+            {!successMsg && (
+              <div>
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={loading}
+                  className="w-full py-4 bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-2xl font-bold text-stone-700 dark:text-stone-300 flex justify-center items-center gap-2 transition-all hover:bg-stone-50 dark:hover:bg-stone-800 active:scale-95 disabled:opacity-50 mt-4"
+                >
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="mr-2 w-5 h-5" />
+                  Sign in with Google
+                </button>
+              </div>
+            )}
           </form>
           
           <div className="mt-8 border-t border-stone-100 dark:border-stone-800 pt-8 text-[10px] font-black uppercase tracking-widest text-stone-400 text-center">
