@@ -65,9 +65,6 @@ const Dashboard = () => {
               return dateB - dateA;
             });
           
-          const today = new Date();
-          const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-          
           let lifetimeIncome = 0;
           let lifetimeExpense = 0;
           let monthlyIncome = 0;

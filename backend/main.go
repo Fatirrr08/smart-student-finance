@@ -8,9 +8,15 @@ import (
 	"github.com/fatirgibran/smart-student-finance-tracker/backend/models"
 	"github.com/fatirgibran/smart-student-finance-tracker/backend/routes"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load .env file
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using system environment variables")
+	}
+
 	// Connect to database
 	config.ConnectDB()
 

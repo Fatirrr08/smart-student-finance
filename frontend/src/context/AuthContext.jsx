@@ -10,21 +10,31 @@ import {
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
-import { ref, set, onValue } from 'firebase/database';
+import { ref, set, onValue, get } from 'firebase/database';
 import { auth, db } from '../services/firebase';
 
 const AuthContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    // Safety timeout to prevent infinite white screen if Firebase fails to resolve
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn("Firebase Auth timeout reached. Forcing loading state to false.");
+        setLoading(false);
+      }
+    }, 6000);
+
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Load additional data from DB
+        // Load additional data from DB (Firebase Realtime DB)
         const dbRef = ref(db, `users/${currentUser.uid}`);
         onValue(dbRef, (snapshot) => {
           const dbData = snapshot.val() || {};
@@ -39,14 +49,28 @@ export const AuthProvider = ({ children }) => {
             bio: dbData.bio || ''
           });
           setLoading(false);
+          clearTimeout(timer);
+        }, (err) => {
+          console.error("DB Fetch error:", err);
+          setUser({ id: currentUser.uid, email: currentUser.email, name: currentUser.displayName || 'User' });
+          setLoading(false);
+          clearTimeout(timer);
         }, { onlyOnce: true });
       } else {
         setUser(null);
         setLoading(false);
+        clearTimeout(timer);
       }
+    }, (err) => {
+      console.error("Auth State error:", err);
+      setLoading(false);
+      clearTimeout(timer);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+    };
   }, []);
 
   const login = async (email, password) => {
@@ -74,7 +98,6 @@ export const AuthProvider = ({ children }) => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const currentUser = userCredential.user;
       
-      // Update profile to include name
       await updateProfile(currentUser, { displayName: name });
       
       setUser({
@@ -98,6 +121,7 @@ export const AuthProvider = ({ children }) => {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
       const currentUser = userCredential.user;
+
       setUser({
         id: currentUser.uid,
         uid: currentUser.uid,
@@ -194,6 +218,40 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const searchAccount = async (searchQuery) => {
+    try {
+      const usersRef = ref(db, 'users');
+      const snapshot = await get(usersRef);
+      if (snapshot.exists()) {
+        const usersData = snapshot.val();
+        const results = Object.keys(usersData).map(key => ({ id: key, ...usersData[key] }));
+        
+        return results.filter(u => 
+          (u.email && u.email.includes(searchQuery)) || 
+          (u.phone && u.phone.includes(searchQuery)) || 
+          (u.name && u.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+      }
+      return [];
+    } catch (error) {
+      console.error("Search failed:", error);
+      return [];
+    }
+  };
+
+  const sendOTP = async () => {
+    // Simulasi OTP karena sudah menggunakan Firebase Authentication 100%
+    return { message: "OTP sent successfully (Simulasi)", debug_otp: "123456" };
+  };
+
+  const verifyOTP = async (target, otp) => {
+    // Simulasi OTP karena sudah menggunakan Firebase Authentication 100%
+    if (otp === "123456") {
+      return { message: "OTP verified successfully (Simulasi)" };
+    }
+    return { error: "Kode OTP Salah (Simulation Mode: Use 123456)" };
+  };
+
   const value = {
     user,
     login,
@@ -203,6 +261,9 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     changePassword,
     updateUserProfile,
+    searchAccount,
+    sendOTP,
+    verifyOTP,
     loading
   };
 

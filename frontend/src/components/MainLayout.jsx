@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { db } from '../services/firebase';
-import { ref, onValue, push } from 'firebase/database';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, TrendingUp, Receipt, PieChart, LogOut, FileText, User } from 'lucide-react';
 

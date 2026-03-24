@@ -215,7 +215,7 @@ const Budget = () => {
                     )}
                   </div>
                 );
-             } catch (e) {
+             } catch {
                 return null;
              }
           }) : (

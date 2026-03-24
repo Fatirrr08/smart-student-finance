@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { ref, push, remove, onValue, set } from 'firebase/database';
-import { db, auth } from '../services/firebase';
+import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 import GlobalFilter from '../components/GlobalFilter';
 import { isCurrentWeek, isCurrentMonth } from '../utils/dateUtils';

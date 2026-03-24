@@ -10,5 +10,10 @@ func AuthRoutes(r *gin.RouterGroup) {
 	{
 		auth.POST("/register", controllers.Register)
 		auth.POST("/login", controllers.Login)
+		auth.POST("/forgot-password", controllers.ForgotPassword)
+		auth.POST("/reset-password", controllers.ResetPassword)
+		auth.POST("/send-otp", controllers.SendOTP)
+		auth.POST("/verify-otp", controllers.VerifyOTP)
+		auth.GET("/search", controllers.SearchAccount)
 	}
 }

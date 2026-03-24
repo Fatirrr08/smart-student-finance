@@ -6,6 +6,7 @@ import MainLayout from './components/MainLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
+import SearchAccount from './pages/SearchAccount';
 
 import Dashboard from './pages/Dashboard';
 import Income from './pages/Income';
@@ -29,6 +30,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/search-account" element={<SearchAccount />} />
           
           <Route path="/" element={<PrivateRoute><MainLayout /></PrivateRoute>}>
             <Route index element={<Dashboard />} />

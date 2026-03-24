@@ -12,6 +12,15 @@
     --fluid-bp: calc((var(--fluid-screen) - var(--fluid-min-width) * 1px) / (var(--fluid-max-width) - var(--fluid-min-width)));
   }
 
+  ::selection {
+    @apply bg-primary/20 text-primary;
+  }
+
+  /* Standardized focus ring */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background dark:ring-offset-darkbg transition-all;
+  }
+
   html {
     /* Fluid scale for base font size */
     font-size: clamp(0.875rem, 0.8rem + 0.4vw, 1rem);
@@ -21,7 +30,7 @@
   }
 
   body {
-    @apply bg-background text-dark dark:bg-darkbg dark:text-stone-100 transition-colors duration-200;
+    @apply bg-background text-dark dark:bg-darkbg dark:text-stone-100 transition-colors duration-200 overflow-x-hidden;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
@@ -31,13 +40,62 @@
   h3 { @apply text-stone-900 dark:text-white text-xl font-semibold sm:text-2xl; }
 }
 
+@layer components {
+  /* Premium Input/Select/Textarea base styles */
+  input:not([type="checkbox"]):not([type="radio"]), 
+  select, 
+  textarea {
+    @apply w-full p-3 bg-stone-50 dark:bg-stone-900 border border-transparent 
+    focus:border-primary/20 focus:bg-white dark:focus:bg-stone-800 
+    rounded-xl dark:text-white font-bold transition-all outline-none;
+  }
+
+  .btn {
+    @apply px-6 py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2;
+  }
+  
+  .btn-primary {
+    @apply bg-primary hover:opacity-90 text-white shadow-lg shadow-primary/20;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary hover:opacity-90 text-white shadow-lg shadow-secondary/20;
+  }
+}
+
 @layer utilities {
   .glass {
-    @apply bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border border-white/20 dark:border-gray-700/30;
+    @apply bg-white/70 dark:bg-stone-900/70 backdrop-blur-md border border-white/20 dark:border-white/5;
+  }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.stone.200') transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-stone-200 dark:bg-stone-800 rounded-full hover:bg-stone-300 dark:hover:bg-stone-700 transition-colors;
   }
   
   .animate-fade-in-up {
     animation: fadeInUp 0.5s ease-out forwards;
+  }
+
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1;
+  }
+
+  .tap-scale {
+    @apply active:scale-95 transition-transform;
   }
 
   @keyframes fadeInUp {

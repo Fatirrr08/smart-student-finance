@@ -17,6 +17,14 @@ export default {
         background: '#FAF9F6', // Off-white / Stone 50
         darkbg: '#0C0A09', // Stone 950
       },
+      borderRadius: {
+        'xl-plus': '1.25rem',
+        '2xl-plus': '2rem',
+        '3xl-plus': '2.5rem',
+      },
+      spacing: {
+        '18': '4.5rem',
+      },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },

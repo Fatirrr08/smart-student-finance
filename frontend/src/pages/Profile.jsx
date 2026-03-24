@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, Shield, Save, LogOut, Key, CheckCircle2, AlertCircle, Camera, Phone, Briefcase, FileText } from 'lucide-react';
-import { auth, storage } from '../services/firebase';
+import { storage } from '../services/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const Profile = () => {

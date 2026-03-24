@@ -28,11 +28,11 @@ const Reports = () => {
 
   useEffect(() => {
     if (!user) {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 0);
       return;
     }
     
-    setLoading(true);
+    setTimeout(() => setLoading(true), 0);
     const transactionsRef = ref(db, `transactions/${user?.id || user?.uid}`);
     const unsubscribe = onValue(transactionsRef, (snapshot) => {
       const data = snapshot.val();

@@ -98,6 +98,9 @@ const Login = () => {
                 <Link to="/forgot-password" size="sm" className="text-xs font-bold text-primary hover:opacity-80 transition-opacity">
                   Lupa Password?
                 </Link>
+                <Link to="/search-account" className="text-xs font-bold text-stone-400 hover:text-primary transition-colors ml-4">
+                  Cari Akun
+                </Link>
               </div>
             </div>
 
