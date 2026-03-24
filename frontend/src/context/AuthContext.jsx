@@ -255,17 +255,59 @@ export const AuthProvider = ({ children }) => {
 
   const sendPhoneOTP = async (phoneNumber) => {
     try {
+      // Bersihkan reCAPTCHA lama jika ada (mencegah error re-render)
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      }
+      setupRecaptcha('recaptcha-container');
+
       const appVerifier = window.recaptchaVerifier;
       const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       window.confirmationResult = confirmationResult;
-      return { success: true };
+      
+      return { success: true, isSimulation: false };
     } catch (error) {
       console.error("SMS sent error:", error);
+      // Jika error karena masalah ketiadaan billing di Firebase, otomatis alihkan ke Simulasi!
+      if (error?.code === 'auth/billing-not-enabled' || error?.code === 'auth/quota-exceeded' || error?.message?.includes('billing')) {
+        console.warn("Firebase Billing not enabled. Switching to Simulation Mode.");
+        return { 
+          success: true, 
+          isSimulation: true, 
+          message: "Mode Simulasi Aktif (SMS Firebase Diblokir Google). Gunakan OTP: 123456" 
+        };
+      }
       return { success: false, message: error.message };
     }
   };
 
-  const verifyPhoneOTP = async (otp) => {
+  const verifyPhoneOTP = async (otp, phoneNumber = '', isSimulation = false) => {
+    // Mode Simulasi (Fallback Hybrid)
+    if (isSimulation) {
+      if (otp === "123456") {
+        try {
+          const fakeEmail = `${phoneNumber.replace(/\+/g, '')}@smartfin.local`;
+          const fakePassword = `sim_pwd_${phoneNumber.replace(/\+/g, '')}`;
+          
+          let userCredential;
+          try {
+            // Coba login dulu
+            userCredential = await signInWithEmailAndPassword(auth, fakeEmail, fakePassword);
+          } catch (loginError) {
+            // Jika gagal (akun tidak ada), otomatis register
+            userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, fakePassword);
+          }
+          return { success: true, user: userCredential.user };
+        } catch (simError) {
+          console.error("Simulation Auth Error:", simError);
+          return { success: false, message: simError.message };
+        }
+      }
+      return { success: false, message: "Kode OTP Salah. (Mode Simulasi: Wajib 123456)" };
+    }
+
+    // Mode Native Firebase
     try {
       const result = await window.confirmationResult.confirm(otp);
       return { success: true, user: result.user };

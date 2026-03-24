@@ -10,6 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [showOtpStep, setShowOtpStep] = useState(false);
+  const [isSimulation, setIsSimulation] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -48,6 +49,12 @@ const Login = () => {
 
     const res = await sendPhoneOTP(phone);
     if (res.success) {
+      if (res.isSimulation) {
+        setIsSimulation(true);
+        setError(res.message); // Tampilkan pesan bahwa sedang mode simulasi
+      } else {
+        setIsSimulation(false);
+      }
       setShowOtpStep(true);
     } else {
       setError(res.message);
@@ -60,7 +67,7 @@ const Login = () => {
     setLoading(true);
     setError('');
     
-    const vRes = await verifyPhoneOTP(otp);
+    const vRes = await verifyPhoneOTP(otp, phone, isSimulation);
     if (vRes.success) {
       navigate('/');
     } else {
