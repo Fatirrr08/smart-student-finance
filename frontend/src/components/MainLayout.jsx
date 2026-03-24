@@ -8,12 +8,12 @@ const MainLayout = () => {
   const navigate = useNavigate();
 
   const links = [
-    { to: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-    { to: '/income', label: 'Pemasukan', icon: <TrendingUp size={20} /> },
-    { to: '/expenses', label: 'Pengeluaran', icon: <Receipt size={20} /> },
-    { to: '/budget', label: 'Budget', icon: <PieChart size={20} /> },
-    { to: '/reports', label: 'Laporan', icon: <FileText size={20} /> },
-    { to: '/profile', label: 'Profil', icon: <User size={20} /> },
+    { to: '/', label: 'Dashboard', shortLabel: 'Home', icon: <LayoutDashboard size={20} /> },
+    { to: '/income', label: 'Pemasukan', shortLabel: 'Masuk', icon: <TrendingUp size={20} /> },
+    { to: '/expenses', label: 'Pengeluaran', shortLabel: 'Keluar', icon: <Receipt size={20} /> },
+    { to: '/budget', label: 'Budget', shortLabel: 'Budget', icon: <PieChart size={20} /> },
+    { to: '/reports', label: 'Laporan', shortLabel: 'Laporan', icon: <FileText size={20} /> },
+    { to: '/profile', label: 'Profil', shortLabel: 'Profil', icon: <User size={20} /> },
   ];
 
   const handleLogout = () => {
@@ -22,7 +22,7 @@ const MainLayout = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background dark:bg-darkbg text-stone-900 dark:text-stone-100 font-sans">
+    <div className="flex h-[100dvh] overflow-hidden bg-background dark:bg-darkbg text-stone-900 dark:text-stone-100 font-sans">
       {/* Sidebar Navigation - DESKTOP ONLY */}
       <aside className="w-64 bg-white dark:bg-darkbg border-r border-stone-100 dark:border-stone-800 flex-col hidden md:flex">
         <div className="p-8 font-black text-2xl text-primary flex items-center gap-3 tracking-tighter">
@@ -66,7 +66,7 @@ const MainLayout = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto pb-24 md:pb-0">
+      <main className="flex-1 overflow-y-auto pb-32 md:pb-0">
         {/* Mobile Header */}
         <div className="md:hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center sticky top-0 z-40 shadow-sm">
           <div className="font-bold text-xl text-primary flex items-center gap-2">
@@ -92,7 +92,7 @@ const MainLayout = () => {
       </main>
 
       {/* BOTTOM NAVIGATION - MOBILE ONLY */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 pb-safe px-2 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 flex justify-between items-center h-[4.5rem] pb-safe px-1 z-50">
         {links.map((link) => (
           <NavLink
             key={link.to}
@@ -108,7 +108,7 @@ const MainLayout = () => {
             <div className={`p-1 rounded-md transition-colors ${link.to === window.location.hash.replace('#', '') || (link.to === '/' && window.location.hash === '#/') ? 'bg-primary/10' : ''}`}>
               {React.cloneElement(link.icon, { size: 20 })}
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider">{link.label}</span>
+            <span className="text-[9px] font-bold uppercase tracking-tight truncate w-full text-center px-0.5">{link.shortLabel}</span>
           </NavLink>
         ))}
       </nav>
