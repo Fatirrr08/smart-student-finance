@@ -8,7 +8,9 @@ import {
   updateProfile,
   sendPasswordResetEmail,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  RecaptchaVerifier,
+  signInWithPhoneNumber
 } from 'firebase/auth';
 import { ref, set, onValue, get } from 'firebase/database';
 import { auth, db } from '../services/firebase';
@@ -239,17 +241,38 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const sendOTP = async () => {
-    // Simulasi OTP karena sudah menggunakan Firebase Authentication 100%
-    return { message: "OTP sent successfully (Simulasi)", debug_otp: "123456" };
+  const setupRecaptcha = (containerId) => {
+    try {
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+          size: 'invisible'
+        });
+      }
+    } catch (e) {
+      console.error("Recaptcha error:", e);
+    }
   };
 
-  const verifyOTP = async (target, otp) => {
-    // Simulasi OTP karena sudah menggunakan Firebase Authentication 100%
-    if (otp === "123456") {
-      return { message: "OTP verified successfully (Simulasi)" };
+  const sendPhoneOTP = async (phoneNumber) => {
+    try {
+      const appVerifier = window.recaptchaVerifier;
+      const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+      window.confirmationResult = confirmationResult;
+      return { success: true };
+    } catch (error) {
+      console.error("SMS sent error:", error);
+      return { success: false, message: error.message };
     }
-    return { error: "Kode OTP Salah (Simulation Mode: Use 123456)" };
+  };
+
+  const verifyPhoneOTP = async (otp) => {
+    try {
+      const result = await window.confirmationResult.confirm(otp);
+      return { success: true, user: result.user };
+    } catch (error) {
+      console.error("OTP Verification Error:", error);
+      return { success: false, message: error.message };
+    }
   };
 
   const value = {
@@ -262,8 +285,9 @@ export const AuthProvider = ({ children }) => {
     changePassword,
     updateUserProfile,
     searchAccount,
-    sendOTP,
-    verifyOTP,
+    setupRecaptcha,
+    sendPhoneOTP,
+    verifyPhoneOTP,
     loading
   };
 

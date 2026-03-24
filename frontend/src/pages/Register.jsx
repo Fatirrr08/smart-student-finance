@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { TrendingUp, UserPlus } from 'lucide-react';
+import { TrendingUp, UserPlus, Phone as PhoneIcon, Mail as MailIcon } from 'lucide-react';
 
 const Register = () => {
   const [regMethod, setRegMethod] = useState('email'); // 'email' or 'phone'
@@ -14,73 +14,61 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { register, loginWithGoogle, sendOTP, verifyOTP } = useAuth();
+  const { register, loginWithGoogle, setupRecaptcha, sendPhoneOTP, verifyPhoneOTP, updateUserProfile } = useAuth();
   const navigate = useNavigate();
 
-  const handleSendOtp = async (e) => {
+  useEffect(() => {
+    // Setup reCAPTCHA for phone auth immediately
+    setupRecaptcha('recaptcha-container');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleEmailRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     
-    const target = regMethod === 'email' ? email : phone;
-    if (!target) {
-      setError(`Silakan masukkan ${regMethod === 'email' ? 'email' : 'nomor HP'}`);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const res = await sendOTP(target);
-      if (res.debug_otp) {
-        setShowOtpStep(true);
-        if (res.message && res.message.includes("(Simulasi)")) {
-          setError("Mode Simulasi: Gunakan OTP 123456");
-        }
-      } else if (res.error) {
-        setError(res.error === "Failed to fetch" ? "Error: Backend tidak terjangkau (Cek localhost:8080). Menggunakan Mode Simulasi..." : res.error);
-        // Fallback to simulation even if AuthContext didn't catch it for some reason
-        setShowOtpStep(true);
-      } else {
-        setShowOtpStep(true);
-      }
-    } catch {
-      setError("Gagal terhubung. Mode Simulasi Aktif.");
-      setShowOtpStep(true);
+    // Direct Native Firebase Email/Password Registration (No OTP needed for email)
+    const res = await register(name, email, password);
+    if (res.success) {
+      navigate('/login');
+    } else {
+      setError(res.message);
     }
     setLoading(false);
   };
 
-  const handleRegister = async (e) => {
+  const handlePhoneOTPRequest = async (e) => {
+    e.preventDefault();
+    if (!phone) {
+      setError("Silakan masukkan nomor HP dengan kode negara (contoh: +6281...)");
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+
+    const res = await sendPhoneOTP(phone);
+    if (res.success) {
+      setShowOtpStep(true);
+    } else {
+      setError(res.message);
+    }
+    setLoading(false);
+  };
+
+  const handlePhoneRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     
-    const target = regMethod === 'email' ? email : phone;
-    
-    // Verify OTP first
-    const vRes = await verifyOTP(target, otp);
-    if (vRes.error && !vRes.error.includes("Simulation Mode")) {
-      setError(vRes.error === "Failed to fetch" ? "Error: Backend tidak terjangkau. Melanjutkan Registrasi..." : "Kode OTP Salah");
-      // If it's just a network error, we can still proceed in simulation mode
-      if (vRes.error !== "Failed to fetch") {
-        setLoading(false);
-        return;
-      }
-    }
-
-    // For Firebase, we always need an email. 
-    // If they used phone, we create a placeholder email: phone@smartfin.local
-    const finalEmail = regMethod === 'email' ? email : `${phone.replace('+', '')}@smartfin.local`;
-    
-    const res = await register(name, finalEmail, password);
-    if (res.success) {
-      // Update profile with real phone if provided
-      if (regMethod === 'phone') {
-        // Here we could call another backend sync to link the phone
-      }
-      navigate('/login');
+    const vRes = await verifyPhoneOTP(otp);
+    if (vRes.success) {
+      // User is verified and logged in. Now we update the profile with the name they entered
+      await updateUserProfile({ displayName: name, phone: phone });
+      navigate('/');
     } else {
-      setError(res.message);
+      setError(vRes.message || "Kode OTP Salah");
     }
     setLoading(false);
   };
@@ -95,6 +83,16 @@ const Register = () => {
       setError(res.message);
     }
     setLoading(false);
+  };
+
+  const handleFormSubmit = (e) => {
+    if (showOtpStep) {
+      handlePhoneRegister(e);
+    } else if (regMethod === 'email') {
+      handleEmailRegister(e);
+    } else {
+      handlePhoneOTPRequest(e);
+    }
   };
 
   return (
@@ -116,7 +114,7 @@ const Register = () => {
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white dark:bg-darkbg py-10 px-6 shadow-xl shadow-stone-200/50 dark:shadow-none sm:rounded-[2rem] sm:px-10 border border-stone-100 dark:border-stone-800">
-          <form className="space-y-6" onSubmit={showOtpStep ? handleRegister : handleSendOtp}>
+          <form className="space-y-6" onSubmit={handleFormSubmit}>
             {error && (
               <div className="bg-red-50 dark:bg-red-900/30 text-danger p-3 rounded-md text-sm text-center font-bold">
                 {error}
@@ -128,17 +126,17 @@ const Register = () => {
                 <div className="flex bg-stone-100 dark:bg-stone-900 p-1 rounded-2xl mb-6">
                   <button
                     type="button"
-                    onClick={() => setRegMethod('email')}
-                    className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${regMethod === 'email' ? 'bg-white dark:bg-stone-800 text-primary shadow-sm' : 'text-stone-400'}`}
+                    onClick={() => { setRegMethod('email'); setError(''); }}
+                    className={`flex-1 flex justify-center items-center gap-2 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${regMethod === 'email' ? 'bg-white dark:bg-stone-800 text-primary shadow-sm' : 'text-stone-400'}`}
                   >
-                    Email
+                    <MailIcon size={16} /> Email
                   </button>
                   <button
                     type="button"
-                    onClick={() => setRegMethod('phone')}
-                    className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${regMethod === 'phone' ? 'bg-white dark:bg-stone-800 text-primary shadow-sm' : 'text-stone-400'}`}
+                    onClick={() => { setRegMethod('phone'); setError(''); }}
+                    className={`flex-1 flex justify-center items-center gap-2 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${regMethod === 'phone' ? 'bg-white dark:bg-stone-800 text-primary shadow-sm' : 'text-stone-400'}`}
                   >
-                    Nomor HP
+                    <PhoneIcon size={16} /> Nomor HP
                   </button>
                 </div>
 
@@ -176,7 +174,7 @@ const Register = () => {
                   ) : (
                     <div>
                       <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">
-                        Phone Number
+                        Phone Number (Gunakan +62)
                       </label>
                       <input
                         type="tel"
@@ -184,32 +182,37 @@ const Register = () => {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none"
-                        placeholder="+62..."
+                        placeholder="+6281234..."
                       />
                     </div>
                   )}
                 </div>
 
-                <div className="mt-4">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">
-                    Password
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none"
-                      placeholder="••••••••"
-                    />
+                {regMethod === 'email' && (
+                  <div className="mt-4 mb-2">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">
+                      Password
+                    </label>
+                    <div className="mt-1">
+                      <input
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full p-3 bg-stone-50 dark:bg-stone-900 border-transparent focus:border-stone-200 focus:bg-white dark:focus:bg-stone-800 rounded-xl dark:text-white font-bold transition-all outline-none"
+                        placeholder="••••••••"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
+                
+                {/* Firebase ReCAPTCHA Container */}
+                <div id="recaptcha-container" className="flex justify-center mt-4"></div>
               </>
             ) : (
               <div className="animate-in fade-in slide-in-from-bottom-4">
                 <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2 text-center">
-                  Enter 6-Digit OTP
+                  Mengirim SMS ke {phone}...
                 </label>
                 <input
                   type="text"
@@ -221,14 +224,14 @@ const Register = () => {
                   placeholder="000000"
                 />
                 <p className="mt-4 text-xs text-center text-stone-500">
-                  Kami telah mengirimkan kode ke {email || phone}
+                  Silakan masukkan 6 digit kode OTP yang kami kirimkan.
                 </p>
                 <button 
                   type="button"
                   onClick={() => setShowOtpStep(false)}
                   className="mt-2 w-full text-xs font-bold text-primary hover:underline"
                 >
-                  Ganti email/nomor?
+                  Ganti nomor HP?
                 </button>
               </div>
             )}
@@ -242,7 +245,9 @@ const Register = () => {
                 {loading ? 'Processing...' : (
                   <>
                     <UserPlus className="mr-2" size={18} />
-                    {showOtpStep ? 'Verify & Register' : 'Get Started'}
+                    {regMethod === 'email' 
+                      ? 'Daftar Sekarang' 
+                      : (showOtpStep ? 'Verifikasi & Masuk' : 'Kirim SMS OTP')}
                   </>
                 )}
               </button>
